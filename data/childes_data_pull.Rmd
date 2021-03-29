@@ -1,0 +1,79 @@
+---
+title: "childes_data_pull"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This script is to pull relevant data from the CHILDES data
+
+Repo wth transcripts is found here: https://github.com/UIUCLearningLanguageLab/AOCHILDES
+Path for transcripts: https://github.com/UIUCLearningLanguageLab/AOCHILDES/tree/master/original_transcripts
+
+```{r}
+library(tidyverse)
+```
+
+Load all of the transcript paths
+
+```{r, message = FALSE, warning = FALSE}
+transcript_files <- 
+  str_c(
+    "~/GitHub_C/AOCHILDES/original_transcripts/", 
+    dir("~/GitHub_C/AOCHILDES/original_transcripts/")
+  )
+
+all_transcirpts <- 
+  transcript_files %>% 
+  map_df(~read_csv(.))
+```
+
+Count the number tokens in the dataset examples
+
+```{r, message = FALSE, warning = FALSE}
+all_transcirpts %>% 
+  count(num_tokens)
+```
+Filter for transcripts with more than say, 5 tokens 
+
+```{r, message = FALSE, warning = FALSE}
+all_transcirpts %>% 
+  filter(num_tokens > 5)
+```
+How old are the kids
+
+```{r, message = FALSE, warning = FALSE}
+all_transcirpts %>% 
+  filter(num_tokens > 5) %>% 
+  mutate(target_child_age = target_child_age / 365) %>% 
+  ggplot(aes(target_child_age)) +
+  geom_histogram(bins = 30)
+```
+
+
+Load the wordbank words
+
+```{r}
+base::load("~/GitHub_C/wordbank-book/data/psychometrics/eng_ws_mods_4pl.Rds")
+
+wordbank_words <- coefs_4pl %>% pull(definition)
+```
+
+
+```{r}
+all_transcirpts %>% 
+  filter(
+    num_tokens > 3,
+    str_detect(gloss, wordbank_words)
+  ) 
+```
+
+
+
+

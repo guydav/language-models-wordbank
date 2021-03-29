@@ -1,0 +1,77 @@
+---
+title: "fb_babi_data"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r}
+library(tidyverse)
+```
+
+Download here:
+https://venturebeat.com/2016/02/18/facebook-releases-1-6gb-data-set-of-childrens-stories-for-training-its-ai/
+
+Preposition data
+Look at read me and file sizes
+"Data is in the included "data" folder. Questions are separated according to whether the missing word is a named entity (NE), common noun (CN), verb (V) or preposition (P). The POS/NER was done by Stanford CoreNLP and nothing else. Thus the dataset consists of the following files:"
+
+
+"Data is in the included "data" folder. Questions are separated according to whether the missing word is a named entity (NE), common noun (CN), verb (V) or preposition (P). The POS/NER was done by Stanford CoreNLP and nothing else. Thus the dataset consists of the following files:
+
+
+cbtest_NE_train.txt : 67128 questions
+cbtest_NE_valid_2000ex.txt : 2000
+cbtest_NE_test_2500ex.txt : 2500
+
+cbtest_CN_train.txt : 121176 questions
+cbtest_CN_valid_2000ex.txt : 2000
+cbtest_CN_test_2500ex.txt : 2500
+
+cbtest_V_train.txt : 109111 questions
+cbtest_V_valid_2000ex.txt : 2000
+cbtest_V_test_2500ex.txt : 2500
+
+cbtest_P_train.txt : 67128 questions
+cbtest_P_valid_2000ex.txt : 2000
+cbtest_P_test_2500ex.txt : 2500
+
+These files, the text is in the format of CBT questions (see below). We also release the raw text from test / valid / train sets, again tokenised by Stanford Core NLP. These files have the form cbt_{train, valid, test}.txt
+
+Detailed stats of all question types are given in the "stats" folder."
+
+```{r}
+cb_data_test <- "~/Downloads/CBTest/data/cbtest_P_train.txt"
+prep_data <- read_tsv(cb_data_test, col_names = F)
+```
+
+
+```{r}
+prep_data
+```
+
+Load the wordbank words
+
+```{r}
+base::load("~/GitHub_C/wordbank-book/data/psychometrics/eng_ws_mods_4pl.Rds")
+
+wordbank_words <- coefs_4pl %>% pull(definition)
+```
+
+
+Filter for rows containing wordbank words
+
+```{r}
+prep_data %>% 
+  filter(
+    str_detect(X1, wordbank_words)
+  ) 
+```
+
+
