@@ -1,0 +1,681 @@
+definition,category
+a,quantifiers
+a lot,quantifiers
+about,locations
+above,locations
+after,time_words
+airplane,vehicles
+all,quantifiers
+all gone,descriptive_words
+alligator,animals
+am,helping_verbs
+an,quantifiers
+and,connecting_words
+animal,animals
+ankle,body_parts
+another,quantifiers
+ant,animals
+any,quantifiers
+apple,food_drink
+applesauce,food_drink
+are,helping_verbs
+arm,body_parts
+around,locations
+asleep,descriptive_words
+at,locations
+aunt,people
+awake,descriptive_words
+away,locations
+baa baa,sounds
+baby,people
+babysitter,people
+babysitter's name,people
+back,locations
+backyard,outside
+bad,descriptive_words
+ball,toys
+balloon,toys
+banana,food_drink
+basement,furniture_rooms
+basket,household
+bat,toys
+bath,games_routines
+bathroom,furniture_rooms
+bathtub,furniture_rooms
+be,helping_verbs
+beach,places
+beads,clothing
+beans,food_drink
+bear,animals
+because,connecting_words
+bed,furniture_rooms
+bedroom,furniture_rooms
+bee,animals
+before,time_words
+behind,locations
+belly button,body_parts
+belt,clothing
+bench,furniture_rooms
+beside,locations
+better,descriptive_words
+bib,clothing
+bicycle,vehicles
+big,descriptive_words
+bird,animals
+bite,action_words
+black,descriptive_words
+blanket,household
+block,toys
+blow,action_words
+blue,descriptive_words
+boat,vehicles
+book,toys
+boots,clothing
+bottle,household
+bowl,household
+box,household
+boy,people
+bread,food_drink
+break,action_words
+breakfast,games_routines
+bring,action_words
+broken,descriptive_words
+broom,household
+brother,people
+brown,descriptive_words
+brush,household
+bubbles,toys
+bucket,household
+bug,animals
+build,action_words
+bump,action_words
+bunny,animals
+bus,vehicles
+but,connecting_words
+butter,food_drink
+butterfly,animals
+buttocks/bottom*,body_parts
+button,clothing
+buy,action_words
+by,locations
+bye,games_routines
+cake,food_drink
+call (on phone),games_routines
+camera,household
+camping,places
+can (auxiliary),helping_verbs
+can (object),household
+candy,food_drink
+car,vehicles
+careful,descriptive_words
+carrots,food_drink
+carry,action_words
+cat,animals
+catch,action_words
+cereal,food_drink
+chair,furniture_rooms
+chalk,toys
+chase,action_words
+cheek,body_parts
+cheerios,food_drink
+cheese,food_drink
+chicken (animal),animals
+chicken (food),food_drink
+child,people
+child's own name,people
+chin,body_parts
+chocolate,food_drink
+choo choo,sounds
+church*,places
+circus,places
+clap,action_words
+clean (action),action_words
+clean (description),descriptive_words
+climb,action_words
+clock,household
+close,action_words
+closet,furniture_rooms
+cloud,outside
+clown,people
+coat,clothing
+cockadoodledoo,sounds
+coffee,food_drink
+coke,food_drink
+cold,descriptive_words
+comb,household
+cook,action_words
+cookie,food_drink
+corn,food_drink
+couch,furniture_rooms
+could,helping_verbs
+country,places
+cover,action_words
+cow,animals
+cowboy,people
+cracker,food_drink
+crayon,toys
+crib,furniture_rooms
+cry,action_words
+cup,household
+cut,action_words
+cute,descriptive_words
+daddy*,people
+dance,action_words
+dark,descriptive_words
+day,time_words
+deer,animals
+diaper,clothing
+did/did ya,helping_verbs
+dinner,games_routines
+dirty,descriptive_words
+dish,household
+do,helping_verbs
+doctor,people
+does,helping_verbs
+dog,animals
+doll,toys
+don't,helping_verbs
+donkey,animals
+donut,food_drink
+door,furniture_rooms
+down,locations
+downtown,places
+draw,action_words
+drawer,furniture_rooms
+dress (object),clothing
+drink (action),action_words
+drink (beverage),food_drink
+drive,action_words
+drop,action_words
+dry (action),action_words
+dry (description),descriptive_words
+dryer,furniture_rooms
+duck,animals
+dump,action_words
+each,quantifiers
+ear,body_parts
+eat,action_words
+egg,food_drink
+elephant,animals
+empty,descriptive_words
+every,quantifiers
+eye,body_parts
+face,body_parts
+fall,action_words
+farm,places
+fast,descriptive_words
+feed,action_words
+find,action_words
+fine,descriptive_words
+finger,body_parts
+finish,action_words
+fireman,people
+firetruck,vehicles
+first,descriptive_words
+fish (animal),animals
+fish (food),food_drink
+fit,action_words
+fix,action_words
+flag,outside
+flower,outside
+food,food_drink
+foot,body_parts
+for,locations
+fork,household
+french fries,food_drink
+friend,people
+frog,animals
+full,descriptive_words
+game,toys
+garage,furniture_rooms
+garbage,household
+garden,outside
+gas station,places
+gentle,descriptive_words
+get,action_words
+giraffe,animals
+girl,people
+give,action_words
+give me five!,games_routines
+glass,household
+glasses,household
+gloves,clothing
+glue,toys
+go,action_words
+go potty,games_routines
+gonna get you!,games_routines
+gonna/going to,helping_verbs
+good,descriptive_words
+goose,animals
+gotta/got to,helping_verbs
+grandma*,people
+grandpa*,people
+grapes,food_drink
+grass,outside
+green,descriptive_words
+green beans,food_drink
+grrr,sounds
+gum,food_drink
+hafta/have to,helping_verbs
+hair,body_parts
+hamburger,food_drink
+hammer,household
+hand,body_parts
+happy,descriptive_words
+hard,descriptive_words
+hat,clothing
+hate,action_words
+have,action_words
+he,pronouns
+head,body_parts
+hear,action_words
+heavy,descriptive_words
+helicopter,vehicles
+hello,games_routines
+help,action_words
+hen,animals
+her,pronouns
+here,locations
+hers,pronouns
+hi,games_routines
+hide,action_words
+high,descriptive_words
+high chair,furniture_rooms
+him,pronouns
+his,pronouns
+hit,action_words
+hold,action_words
+home,places
+horse,animals
+hose,outside
+hot,descriptive_words
+house,places
+how,question_words
+hug,action_words
+hungry,descriptive_words
+hurry,action_words
+hurt,descriptive_words
+I,pronouns
+ice,food_drink
+ice cream,food_drink
+if,connecting_words
+inside/in,locations
+into,locations
+is,helping_verbs
+it,pronouns
+jacket,clothing
+jar,household
+jeans,clothing
+jello,food_drink
+jelly,food_drink
+juice,food_drink
+jump,action_words
+keys,household
+kick,action_words
+kiss,action_words
+kitchen,furniture_rooms
+kitty,animals
+knee,body_parts
+knife,household
+knock,action_words
+ladder,outside
+lady,people
+lamb,animals
+lamp,household
+last,descriptive_words
+later,time_words
+lawn mower,outside
+leg,body_parts
+lemme/let me,helping_verbs
+lick,action_words
+light,household
+like,action_words
+lion,animals
+lips,body_parts
+listen,action_words
+little (description),descriptive_words
+living room,furniture_rooms
+lollipop,food_drink
+long,descriptive_words
+look,action_words
+loud,descriptive_words
+love,action_words
+lunch,games_routines
+mad,descriptive_words
+mailman,people
+make,action_words
+man,people
+me,pronouns
+meat,food_drink
+medicine,household
+melon,food_drink
+meow,sounds
+milk,food_drink
+mine,pronouns
+mittens,clothing
+mommy*,people
+money,household
+monkey,animals
+moo,sounds
+moon,outside
+moose,animals
+mop,household
+more,quantifiers
+morning,time_words
+motorcycle,vehicles
+mouse,animals
+mouth,body_parts
+movie,places
+much,quantifiers
+muffin,food_drink
+my,pronouns
+myself,pronouns
+nail,household
+nap,games_routines
+napkin,household
+naughty,descriptive_words
+necklace,clothing
+need/need to,helping_verbs
+new,descriptive_words
+next to,locations
+nice,descriptive_words
+night,time_words
+night night,games_routines
+no,games_routines
+noisy,descriptive_words
+none,quantifiers
+noodles,food_drink
+nose,body_parts
+not,quantifiers
+now,time_words
+nurse,people
+nuts,food_drink
+of,locations
+off,locations
+old,descriptive_words
+on,locations
+on top of,locations
+open,action_words
+orange (description),descriptive_words
+orange (food),food_drink
+other,quantifiers
+ouch,sounds
+our,pronouns
+out,locations
+outside,places
+oven,furniture_rooms
+over,locations
+owie/boo boo,body_parts
+owl,animals
+paint,action_words
+pajamas,clothing
+pancake,food_drink
+pants,clothing
+paper,household
+park,places
+party,places
+pattycake,games_routines
+peanut butter,food_drink
+peas,food_drink
+peekaboo,games_routines
+pen,toys
+pencil,toys
+penguin,animals
+penis*,body_parts
+penny,household
+people,people
+person,people
+pet's name,people
+pick,action_words
+pickle,food_drink
+picnic,places
+picture,household
+pig,animals
+pillow,household
+pizza,food_drink
+plant,household
+plate,household
+play,action_words
+play dough,toys
+play pen,furniture_rooms
+playground,places
+please,games_routines
+police,people
+pony,animals
+pool,outside
+poor,descriptive_words
+popcorn,food_drink
+popsicle,food_drink
+porch,furniture_rooms
+potato,food_drink
+potato chip,food_drink
+potty,furniture_rooms
+pour,action_words
+present,toys
+pretend,action_words
+pretty,descriptive_words
+pretzel,food_drink
+pudding,food_drink
+pull,action_words
+pumpkin,food_drink
+puppy,animals
+purse,household
+push,action_words
+put,action_words
+puzzle,toys
+quack quack,sounds
+quiet,descriptive_words
+radio,household
+rain,outside
+raisin,food_drink
+read,action_words
+red,descriptive_words
+refrigerator,furniture_rooms
+ride,action_words
+rip,action_words
+rock,outside
+rocking chair,furniture_rooms
+roof,outside
+room,furniture_rooms
+rooster,animals
+run,action_words
+sad,descriptive_words
+salt,food_drink
+same,quantifiers
+sandbox,outside
+sandwich,food_drink
+sauce,food_drink
+say,action_words
+scared,descriptive_words
+scarf,clothing
+school,places
+scissors,household
+see,action_words
+shake,action_words
+share,action_words
+she,pronouns
+sheep,animals
+shh/shush/hush,games_routines
+shirt,clothing
+shoe,clothing
+shopping,games_routines
+shorts,clothing
+shoulder,body_parts
+shovel,outside
+show,action_words
+shower,furniture_rooms
+sick,descriptive_words
+sidewalk,outside
+sing,action_words
+sink,furniture_rooms
+sister,people
+sit,action_words
+skate,action_words
+sky,outside
+sled,vehicles
+sleep,action_words
+sleepy,descriptive_words
+slide (action),action_words
+slide (object),outside
+slipper,clothing
+slow,descriptive_words
+smile,action_words
+snack,games_routines
+sneaker,clothing
+snow,outside
+snowman,outside
+snowsuit,clothing
+so,connecting_words
+so big!,games_routines
+soap,household
+sock,clothing
+soda/pop,food_drink
+sofa,furniture_rooms
+soft,descriptive_words
+some,quantifiers
+soup,food_drink
+spaghetti,food_drink
+spill,action_words
+splash,action_words
+spoon,household
+sprinkler,outside
+squirrel,animals
+stairs,furniture_rooms
+stand,action_words
+star,outside
+stay,action_words
+stick,outside
+sticky,descriptive_words
+stone,outside
+stop,action_words
+store,places
+story,toys
+stove,furniture_rooms
+strawberry,food_drink
+street,outside
+stroller,vehicles
+stuck,descriptive_words
+sun,outside
+sweater,clothing
+sweep,action_words
+swim,action_words
+swing (action),action_words
+swing (object),outside
+table,furniture_rooms
+take,action_words
+talk,action_words
+tape,household
+taste,action_words
+teacher,people
+tear,action_words
+teddybear,animals
+telephone,household
+thank you,games_routines
+that,pronouns
+the,quantifiers
+their,pronouns
+them,pronouns
+then,connecting_words
+there,locations
+these,pronouns
+they,pronouns
+think,action_words
+thirsty,descriptive_words
+this,pronouns
+this little piggy,games_routines
+those,pronouns
+throw,action_words
+tickle,action_words
+tiger,animals
+tights,clothing
+time,time_words
+tiny,descriptive_words
+tired,descriptive_words
+tissue/kleenex,household
+to,locations
+toast,food_drink
+today,time_words
+toe,body_parts
+tomorrow,time_words
+tongue,body_parts
+tonight,time_words
+too,quantifiers
+tooth,body_parts
+toothbrush,household
+touch,action_words
+towel,household
+toy (object),toys
+tractor,vehicles
+train,vehicles
+trash,household
+tray,household
+tree,outside
+tricycle,vehicles
+truck,vehicles
+try/try to,helping_verbs
+tummy,body_parts
+tuna,food_drink
+turkey,animals
+turn around,games_routines
+turtle,animals
+TV,furniture_rooms
+uh oh,sounds
+uncle,people
+under,locations
+underpants,clothing
+up,locations
+us,pronouns
+vacuum,household
+vagina*,body_parts
+vanilla,food_drink
+vitamins,food_drink
+vroom,sounds
+wait,action_words
+wake,action_words
+walk,action_words
+walker,household
+wanna/want to,helping_verbs
+was,helping_verbs
+wash,action_words
+washing machine,furniture_rooms
+watch (action),action_words
+watch (object),household
+water (beverage),food_drink
+water (not beverage),outside
+we,pronouns
+were,helping_verbs
+wet,descriptive_words
+what,question_words
+when,question_words
+where,question_words
+which,question_words
+white,descriptive_words
+who,question_words
+why,question_words
+will,helping_verbs
+wind,outside
+window,furniture_rooms
+windy,descriptive_words
+wipe,action_words
+wish,action_words
+with,locations
+wolf,animals
+woods,places
+woof woof,sounds
+work (action),action_words
+work (place),places
+would,helping_verbs
+write,action_words
+yard,places
+yellow,descriptive_words
+yes,games_routines
+yesterday,time_words
+yogurt,food_drink
+you,pronouns
+your,pronouns
+yourself,pronouns
+yucky,descriptive_words
+yum yum,sounds
+zebra,animals
+zipper,clothing
+zoo,places
