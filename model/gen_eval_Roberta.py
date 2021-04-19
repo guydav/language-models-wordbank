@@ -4,6 +4,8 @@ import torch
 import sys, random
 
 
+DEBUG = 1
+
 def check_Roberta():
     #https://huggingface.co/nyu-mll/roberta-base-100M-1
     #checkpoint_name = "nyu-mll/roberta-base-1B-1"
@@ -79,7 +81,7 @@ def read_wordbank(wordbank):
 
 wordbank = []
 read_wordbank(wordbank)
-print(wordbank)
+print("\nWordbank: ", wordbank)
 #Some sample words:
 #['value', 'a lot', 'all gone', 'alligator', 'applesauce', 'baa baa', 'babysitter', "babysitter's name",'belly button',
 #'choo choo', 'church', 'go', 'go potty', 'gonna get you!', 'going to', 'grrr', 'gum', 'have to',
@@ -129,7 +131,7 @@ print("\nFinished reading Childes data from " + str(no_lines_read) + " lines.")
 
 
 #Generate predictions for wordbank words at their positions using an MLM
-def generate_predictions(checkpoint_name, max_words):    
+def generate_predictions(checkpoint_name, max_words, scoring="top_k", min_prob = 0.1, cutoff = 0.5):    
     #Need to convert to Auto classes. Also check with others if they're sticking to
     #Huggingface models only.
     tokenizer = RobertaTokenizer.from_pretrained(checkpoint_name)
@@ -140,66 +142,114 @@ def generate_predictions(checkpoint_name, max_words):
     
     i = 0
     max_sentences_to_sample = 10#hyper parameter of sorts
-    options = 20
+    no_of_options = 20
     #If checkpoint_name has a /, we need to create a folder if it doesn't exist.
     predictions_file_path = "../output/"+checkpoint_name+"_predictions.tsv"
     predictions_file = open(predictions_file_path, "w")
     print("\nOpened "+ predictions_file_path + " for writing.")
+    score_file_path = "../output/"+checkpoint_name+"_scores.tsv"
+    score_file = open(score_file_path, "w")
+    print("\nOpened "+ score_file_path + " for writing.")
+    ignore_word_list = ['babysitter']
     for word in wordbank:
+        print("\n" + word)
+        if(' ' in word):
+            print("\n Skipped the word '"+ word + "' for being multi-worded. Not scored.")
+            score_file.write(word+"\t \n")
+            continue#skip multi-word wordbank words
+        if(word in ignore_word_list):
+            print("\n Skipped the word '"+ word + "' for being in ignore list. Not scored.")
+            score_file.write(word+"\t \n")
+            continue#skip words like babysitter (too specific)
         word_occurence_list = word_occurences_in_childes.get(word, [])
         if(len(word_occurence_list) > max_sentences_to_sample):
             sampled = random.sample(word_occurence_list, max_sentences_to_sample)
         else:
             sampled = word_occurence_list
-        print("\n" + word)
         print(sampled)
+        len_sampled = len(sampled)
         if len(sampled) == 0:
-            print("\n Skipped "+ word + " for lack of sentences.")
-        for sample in sampled:
-            sentence_id, start, end = sample
-            sentence = childes_sentences[sentence_id]
-            if int(start) == 0:
-                sentence_start = ""
+            score_file.write(word+"\t \n")
+            print("\n Skipped the word '"+ word + "' for lack of sentences. Not scored.")
+        else:
+            passed_among_sampled = 0
+            for sample in sampled:
+                print("\n", sample)
+                sentence_id, start, end = sample
+                sentence = childes_sentences[sentence_id]
+                if int(start) == 0:
+                    sentence_start = ""
+                else:
+                    sentence_start = sentence[:int(start)-1]
+                if int(end) == len(sentence):
+                    sentence_end = ""
+                else:
+                    sentence_end = sentence[int(end):]
+                sentence_masked = sentence_start + tokenizer.mask_token + sentence_end
+                print(sentence_masked)
+                #sentence.replace(, tokenizer.mask_token)
+                input = tokenizer.encode(sentence_masked, return_tensors="pt")
+                mask_token_index = torch.where(input == tokenizer.mask_token_id)[1]
+                #Need to convert to batch mode for faster inference
+                output = model(input, return_dict=True)
+                token_logits = output.logits
+                #Should we play with temperature?
+                mask_token_logits = token_logits[0, mask_token_index, :]
+                mask_token_probs = sm(mask_token_logits)
+                #Have to deal with multiple instances of the same word. Especially with a space extra.
+                #what <mask> did we see at the restaurant yesterday remember
+                #[' else', ' exactly', ' ', ',', ' happened', ' people', ' what', 'What', ' time', ' we', ' little', ' you', '?', ' more', ' anyone', ' What', ' much', ' man', ' pictures', ' day']
+                top_k_tokens = torch.topk(mask_token_logits, no_of_options, dim=1).indices[0].tolist()
+                top_k_words = [tokenizer.decode(token) for token in top_k_tokens]
+                top_k_token_probs = torch.topk(mask_token_probs, no_of_options, dim=1).values[0].tolist()
+                print(top_k_words)
+                print(top_k_token_probs)
+                #HAVE TO DEAL WITH extra spaces, CAPS and SYNONYMS etc
+                if(scoring == "top_k"):
+                    if word in top_k_words or ' '+word in top_k_words:
+                        passed_among_sampled = passed_among_sampled + 1
+                elif(scoring == "min_prob"):
+                    word_token_index = torch.where(top_k_words == word)
+                    if top_k_token_probs[word_token_index] >= min_prob:
+                        passed_among_sampled = passed_among_sampled + 1
+                elif(scoring == "min_rel_prob"):
+                    word_token_index = torch.where(top_k_words == word)
+                    if top_k_token_probs[word_token_index] >= min_prob * max(top_k_token_probs):
+                        passed_among_sampled = passed_among_sampled + 1
+                        
+                predictions_file.write(word+"\t"+str(sentence_id)+"\t"+childes_sentences[sentence_id]+
+                                       "\t"+start+"\t"+end+"\t"+
+                                       ', '.join(top_k_words)+"\t"+
+                                       #', '.join([str(elem) for elem in top_k_tokens])+"\t"+
+                                       ', '.join([str(elem) for elem in top_k_token_probs])+"\n")
+                
+            print("\n", word, ": ", passed_among_sampled, " / ", len_sampled)
+            if(passed_among_sampled/len_sampled >= cutoff):
+                score_file.write(word+"\t1\n")
             else:
-                sentence_start = sentence[:int(start)-1]
-            if int(end) == len(sentence):
-                sentence_end = ""
-            else:
-                sentence_end = sentence[int(end):]
-            sentence_masked = sentence_start + tokenizer.mask_token + sentence_end
-            print(sentence_masked)
-            #sentence.replace(, tokenizer.mask_token)
-            input = tokenizer.encode(sentence_masked, return_tensors="pt")
-            mask_token_index = torch.where(input == tokenizer.mask_token_id)[1]
-            #Need to convert to batch mode for faster inference
-            output = model(input, return_dict=True)
-            token_logits = output.logits
-            mask_token_logits = token_logits[0, mask_token_index, :]
-            mask_token_probs = sm(mask_token_logits)
-            top_k_tokens = torch.topk(mask_token_logits, options, dim=1).indices[0].tolist()
-            top_k_words = [tokenizer.decode(token) for token in top_k_tokens]
-            top_k_token_probs = torch.topk(mask_token_probs, options, dim=1).values[0].tolist()
-            predictions_file.write(word+"\t"+str(sentence_id)+"\t"+childes_sentences[sentence_id]+
-                                   "\t"+start+"\t"+end+"\t"+
-                                   ', '.join(top_k_words)+"\t"+
-                                   #', '.join([str(elem) for elem in top_k_tokens])+"\t"+
-                                   ', '.join([str(elem) for elem in top_k_token_probs])+"\n")
+                score_file.write(word+"\t0\n")
         i = i + 1
         if i > max_words:
             break
     predictions_file.close()
-    print("\Closed "+ predictions_file_path + " for writing.")
+    print("\nClosed "+ predictions_file_path + " for writing.")
+    score_file.close()
+    print("\nClosed "+ score_file_path + " for writing.")
     return i
 
 
 #https://huggingface.co/nyu-mll/roberta-base-100M-1
-#checkpoint_name = "nyu-mll/roberta-base-1B-1"
+checkpoint_name = "nyu-mll/roberta-base-1B-1"
 #checkpoint_name = "nyu-mll/roberta-base-100M-1"
-checkpoint_name = "nyu-mll/roberta-base-10M-1"
+#checkpoint_name = "nyu-mll/roberta-base-10M-1"
 #checkpoint_name = "nyu-mll/roberta-med-small-1M-1"
 # checkpoint_name = 'bert-base-uncased'
 
-no_of_words_evaluated = generate_predictions(checkpoint_name, 20)
-print("\nGenerated predictions for "+str(no_of_words_evaluated)+ 
+no_of_words_evaluated = generate_predictions(checkpoint_name, 10000, scoring="top_k", min_prob = 0.1, cutoff = 0.5)
+print("\nGenerated predictions (or attempted) for "+str(no_of_words_evaluated)+ 
       " words from wordbank using the model " + checkpoint_name)
+
+#When and if we're skipping multi-word wordbank words, IRT parameters
+#won't have underestimated difficulty parameters. The normal
+#distribution assumption is only on ability parameter.
 
