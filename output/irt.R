@@ -3,11 +3,13 @@ library(mirt) #make mirt package available
 lang_acq_run08 <- read.csv("RUN_08_scores_for_R.csv", header = TRUE)
 lang_acq_run09 <- read.csv("RUN_09_100words_scores_for_R.csv", header = TRUE)
 lang_acq_run09_tsv <- read.table("RUN_09_100words_scores_for_R.tsv", header = TRUE)
+lang_acq_run10_all_words_tsv <- read.table("RUN_10_all_words_scores_for_R.tsv", header = TRUE)
 
 
 #one factor, 2PL default item types (2PL)
 twoPL_run08 <- mirt(lang_acq_run08, 1)
 twoPL_run09 <- mirt(lang_acq_run09, 1)
+twoPL_run10 <- mirt(lang_acq_run10_all_words_tsv, 1)
 
 
 #help('coef-method')
