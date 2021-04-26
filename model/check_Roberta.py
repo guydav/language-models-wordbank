@@ -18,10 +18,10 @@ sm = torch.nn.Softmax()
 def check_Roberta():
     sequence = f"Distilled models are smaller than the models they mimic. Using them instead"\
         " of the large versions would help {tokenizer.mask_token} our carbon footprint."
-    childes_sent_1 = f"and you can sit some people down here"
-    childes_sent_1_masked = f"and you can sit some people {tokenizer.mask_token} here"
-    #childes_sent_1 = f"do you do that a lot"
-    #childes_sent_1_masked = f"do you do that {tokenizer.mask_token} {tokenizer.mask_token}"
+    #childes_sent_1 = f"and you can sit some people down here"
+    #childes_sent_1_masked = f"and you can sit some people {tokenizer.mask_token} here"
+    childes_sent_1 = f"do you do that a lot"
+    childes_sent_1_masked = f"do you do that {tokenizer.mask_token} {tokenizer.mask_token}"
     childes_sent_2 = f"want to put somebody to bed"
     childes_sent_2_masked = f"want to put somebody {tokenizer.mask_token} bed"
     #childes_sent_2_masked = f"want to put somebody to {tokenizer.mask_token}"
@@ -33,6 +33,7 @@ def check_Roberta():
     output = model(input, return_dict=True)
     #print(output)
     token_logits = output.logits
+    #Should we play with temperature?
     #token_logits = model(input).logits
     mask_token_logits = token_logits[0, mask_token_index, :]
     #https://discuss.pytorch.org/t/how-to-extract-probabilities/2720/14

@@ -1,0 +1,12 @@
+['nyu-mll/roberta-base-1B-1', 'nyu-mll/roberta-base-100M-1', 'nyu-mll/roberta-base-10M-1', 'nyu-mll/roberta-med-small-1M-1', 'bert-base-uncased']
+['about', 'above', 'after', 'airplane', 'all', 'alligator', 'animal', 'ankle', 'another', 'ant']
+1	1	1	0	0
+1	1	0	0	0
+1	1	1	0	0
+1	0	0	0	0
+1	1	1	0	0
+0	0	0	0	0
+1	1	0	0	0
+0	0	0	0	0
+1	1	1	0	0
+0	0	0	0	0
