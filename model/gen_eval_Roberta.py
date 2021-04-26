@@ -5,6 +5,7 @@ import sys, random
 
 
 DEBUG = 1
+RUN_ID = "01"
 
 def check_Roberta():
     #https://huggingface.co/nyu-mll/roberta-base-100M-1
@@ -150,7 +151,7 @@ def generate_predictions(checkpoint_name, max_words, scoring="top_k", min_prob =
     score_file_path = "../output/"+checkpoint_name+"_scores.tsv"
     score_file = open(score_file_path, "w")
     print("\nOpened "+ score_file_path + " for writing.")
-    ignore_word_list = ['babysitter']
+    ignore_word_list = ['babysitter', 'child\'s own name', 'pet\'s name']
     for word in wordbank:
         print("\n" + word)
         if(' ' in word):
@@ -196,7 +197,7 @@ def generate_predictions(checkpoint_name, max_words, scoring="top_k", min_prob =
                 #Should we play with temperature?
                 mask_token_logits = token_logits[0, mask_token_index, :]
                 mask_token_probs = sm(mask_token_logits)
-                #Have to deal with multiple instances of the same word. Especially with a space extra.
+                #Have to deal with multiple instances of the same word. Especially with a space extra or a cap.
                 #what <mask> did we see at the restaurant yesterday remember
                 #[' else', ' exactly', ' ', ',', ' happened', ' people', ' what', 'What', ' time', ' we', ' little', ' you', '?', ' more', ' anyone', ' What', ' much', ' man', ' pictures', ' day']
                 top_k_tokens = torch.topk(mask_token_logits, no_of_options, dim=1).indices[0].tolist()
@@ -204,18 +205,20 @@ def generate_predictions(checkpoint_name, max_words, scoring="top_k", min_prob =
                 top_k_token_probs = torch.topk(mask_token_probs, no_of_options, dim=1).values[0].tolist()
                 print(top_k_words)
                 print(top_k_token_probs)
+                #https://huggingface.co/transformers/main_classes/tokenizer.html#transformers.PreTrainedTokenizer.decode
                 #HAVE TO DEAL WITH extra spaces, CAPS and SYNONYMS etc
                 if(scoring == "top_k"):
                     if word in top_k_words or ' '+word in top_k_words:
                         passed_among_sampled = passed_among_sampled + 1
-                elif(scoring == "min_prob"):
-                    word_token_index = torch.where(top_k_words == word)
-                    if top_k_token_probs[word_token_index] >= min_prob:
-                        passed_among_sampled = passed_among_sampled + 1
-                elif(scoring == "min_rel_prob"):
-                    word_token_index = torch.where(top_k_words == word)
-                    if top_k_token_probs[word_token_index] >= min_prob * max(top_k_token_probs):
-                        passed_among_sampled = passed_among_sampled + 1
+                else:
+                    #DEal with spaces
+                    word_token_index = torch.where(top_k_words == word or top_k_words == ' '+word)
+                    if(scoring == "min_prob"):
+                        if top_k_token_probs[word_token_index] >= min_prob:
+                            passed_among_sampled = passed_among_sampled + 1
+                    elif(scoring == "min_rel_prob"):
+                        if top_k_token_probs[word_token_index] >= min_prob * max(top_k_token_probs):
+                            passed_among_sampled = passed_among_sampled + 1
                         
                 predictions_file.write(word+"\t"+str(sentence_id)+"\t"+childes_sentences[sentence_id]+
                                        "\t"+start+"\t"+end+"\t"+
@@ -252,4 +255,3 @@ print("\nGenerated predictions (or attempted) for "+str(no_of_words_evaluated)+
 #When and if we're skipping multi-word wordbank words, IRT parameters
 #won't have underestimated difficulty parameters. The normal
 #distribution assumption is only on ability parameter.
-
