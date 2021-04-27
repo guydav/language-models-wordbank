@@ -5,9 +5,9 @@ import torch
 import sys, random
 
 
-DEBUG = 1
+DEBUG = 0
 #Do not repeat this RUN_ID. Every time you run, use a new one. Also, use different ranges so that we don't overlap.
-RUN_ID = "12_all_words"
+RUN_ID = "13_10_words_4_models"
 
 #Read words from wordbank
 def read_wordbank(wordbank):
@@ -206,7 +206,13 @@ def generate_predictions_multiple_models(checkpoint_name_list, max_words, scorin
     print("\nOpened "+ score_file_path + " for writing.")
     score_file.write(str(checkpoint_name_list) + "\n")
     #print the words from wordbank used for generation.
-    score_file.write(str(used_wordbank) + "\n")
+    #score_file.write(str(used_wordbank) + "\n")
+    for word in used_wordbank:
+        if(last_word == word):
+            score_file.write(str(word) + "\n")
+        else:
+            score_file.write(str(word) + "\t")
+    
     #First three runs had the for loops in the other order. Now, each row stands for a model.
     for checkpoint_name in checkpoint_name_list:
         for word in used_wordbank:
@@ -267,12 +273,12 @@ checkpoint_name_6 = 'distilbert-base-uncased'
 
 #checkpoint_names = [checkpoint_name_1, checkpoint_name_2, checkpoint_name_3, checkpoint_name_4, checkpoint_name_5]
 checkpoint_names = [checkpoint_name_4, checkpoint_name_4_2, checkpoint_name_4_3, \
-                    checkpoint_name_3, checkpoint_name_3_2, checkpoint_name_3_3, \
-                    checkpoint_name_2, checkpoint_name_2_2, checkpoint_name_2_3, \
-                    checkpoint_name_1, checkpoint_name_1_2, checkpoint_name_1_3, \
-                    checkpoint_name_5, \
+                    #checkpoint_name_3, checkpoint_name_3_2, checkpoint_name_3_3, \
+                    #checkpoint_name_2, checkpoint_name_2_2, checkpoint_name_2_3, \
+                    #checkpoint_name_1, checkpoint_name_1_2, checkpoint_name_1_3, \
+                    #checkpoint_name_5, \
                     checkpoint_name_6]
 
-generate_predictions_multiple_models(checkpoint_names, 10000, scoring="top_k", min_prob = 0.1, cutoff = 0.5)
+generate_predictions_multiple_models(checkpoint_names, 10, scoring="top_k", min_prob = 0.1, cutoff = 0.5)
 print("\nGenerated predictions (or attempted) for "+ "???" + 
       " words from wordbank using the models " + str(checkpoint_names) )
