@@ -1,3 +1,7 @@
+> lang_acq_run10_all_words_tsv <- read.table("RUN_10_all_words_scores_for_R.tsv", header = TRUE)
+> twoPL_run10 <- mirt(lang_acq_run10_all_words_tsv, 1)
+Iteration: 500, Log-Lik: -1486.356, Max-Change: 0.00038
+EM cycles terminated after 500 iterations.
 > coef(twoPL_run10, IRTpars = TRUE, simplify=TRUE)
 $items
                   a       b g u
@@ -596,3 +600,27 @@ F1
 $cov
    F1
 F1  1
+
+
+
+
+
+> fscores(twoPL_run10)
+              F1
+ [1,] -2.8495530
+ [2,] -2.3894996
+ [3,] -2.6000001
+ [4,] -1.0000000
+ [5,] -0.7995154
+ [6,] -1.0000000
+ [7,]  0.1991256
+ [8,]  0.6000417
+ [9,]  0.4000000
+[10,]  1.2000000
+[11,]  0.9999999
+[12,]  1.2000000
+[13,]  1.0000000
+[14,]  1.5999988
+[15,]  4.9323875
+[16,] -4.4082127
+> 
