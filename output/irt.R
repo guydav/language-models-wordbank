@@ -7,10 +7,22 @@ lang_acq_run10_all_words_tsv <- read.table("RUN_10_all_words_scores_for_R.tsv", 
 
 
 #one factor, 2PL default item types (2PL)
+#The second argument is the no of factors (we give 1 as we assume only one ability/latent factor)
 twoPL_run08 <- mirt(lang_acq_run08, 1)
 twoPL_run09 <- mirt(lang_acq_run09, 1)
 twoPL_run10 <- mirt(lang_acq_run10_all_words_tsv, 1)
+#Page 116 of the documentation
+model <- 'F = 1-587
+		CONSTRAIN = (1-587, a1)'
+twoPL_run10_equal_slopes <- mirt(lang_acq_run10_all_words_tsv, model)
+#Page 116 of the documentation
+twoPL_run10_exploratory_2factor <- mirt(lang_acq_run10_all_words_tsv, 2)
 
+#Page 125, 127 of the documentation
+lognormal_prior <- 'F = 1-587
+PRIOR = (1-587, a1, lnorm, 0, 1)' 
+lognormal_model <- mirt.model(lognormal_prior)
+twoPL_run10_lognormal_prior <- mirt(lang_acq_run10_all_words_tsv, lognormal_model)
 
 #help('coef-method')
 
@@ -24,3 +36,13 @@ coef(twoPL_run08, IRTpars = TRUE, simplify=TRUE)
 help('plot-method')
 plot(twoPL_run09, type = 'trace')
 plot(twoPL_run09, type = 'trace', auto.key = FALSE) #without legend
+
+#???
+plot(twoPL_run10, type = 'info')
+
+#from Example_07.R
+help(fscores)
+# basic fscores inputs using EAP estimator
+fscores(twoPL_run10)
+#shows for each individual. If full.scores = FALSE, shows for each unique response pattern
+fscores(twoPL_run10, full.scores=TRUE)
