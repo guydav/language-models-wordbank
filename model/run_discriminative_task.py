@@ -3,6 +3,7 @@ import argparse
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+import torch
 from transformers import AutoTokenizer, AutoModelForMaskedLM
 from mlm.scorers import MLMScorerPT 
 from wordbank_tasks import discriminative_task_all_words, smallest_nll_criterion
@@ -27,14 +28,16 @@ parser.add_argument('-d', '--original-dataset', default=None)
 parser.add_argument('--different-category-alternative-words', action='store_true')
 
 
-def scorer_from_transformers_checkpoint(checkpotint_name):
+def scorer_from_transformers_checkpoint(checkpotint_name, contexts, device):
     tokenizer = AutoTokenizer.from_pretrained(checkpotint_name)
     model = AutoModelForMaskedLM.from_pretrained(checkpotint_name)
-    return MLMScorerPT(model, None, tokenizer, CONTEXTS, device=DEVICE)
+    return MLMScorerPT(model, None, tokenizer, contexts, device=device)
 
 
 def main(args):
-    scorer = scorer_from_transformers_checkpoint(args.checkpoint_name)
+    contexts = [mx.gpu(0) if torch.cuda.is_available() else mx.cpu()]
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    scorer = scorer_from_transformers_checkpoint(args.checkpoint_name, contexts, device)
     engine = create_engine(f'sqlite:///{DB_PATH}')
     Session = sessionmaker(bind=engine)
     
