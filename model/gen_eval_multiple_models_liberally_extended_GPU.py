@@ -7,7 +7,7 @@ import sys, random
 
 DEBUG = 1
 #Do not repeat this RUN_ID. Every time you run, use a new one. Also, use different ranges so that we don't overlap.
-RUN_ID = "13_beomi_10_words"
+RUN_ID = "16_GPU_29_models_all_words"
 
 #Read words from wordbank
 def read_wordbank(wordbank):
@@ -214,7 +214,12 @@ def generate_predictions_multiple_models(checkpoint_name_list, max_words, scorin
     print("\nOpened "+ score_file_path + " for writing.")
     score_file.write(str(checkpoint_name_list) + "\n")
     #print the words from wordbank used for generation.
-    score_file.write(str(used_wordbank) + "\n")
+    #score_file.write(str(used_wordbank) + "\n")
+    for word in used_wordbank:
+        if(last_word == word):
+            score_file.write(str(word) + "\n")
+        else:
+            score_file.write(str(word) + "\t")
     #First three runs had the for loops in the other order. Now, each row stands for a model.
     for checkpoint_name in checkpoint_name_list:
         for word in used_wordbank:
@@ -318,23 +323,23 @@ checkpoint_name_15_7 = 'xlm-mlm-100-1280'
 
 
 #checkpoint_names = [checkpoint_name_1, checkpoint_name_2, checkpoint_name_3, checkpoint_name_4, checkpoint_name_5]
-checkpoint_names = [#checkpoint_name_4, checkpoint_name_4_2, checkpoint_name_4_3, \
-                    #checkpoint_name_3, checkpoint_name_3_2, checkpoint_name_3_3, \
-                    #checkpoint_name_2, checkpoint_name_2_2, checkpoint_name_2_3, \
-                    #checkpoint_name_1, checkpoint_name_1_2, checkpoint_name_1_3, \
-                    #checkpoint_name_5, \
-                    #checkpoint_name_6, \
-                    #checkpoint_name_7, \
-                    #checkpoint_name_8, \
-                    #checkpoint_name_9, \
-                    #checkpoint_name_10, \
+checkpoint_names = [checkpoint_name_4, checkpoint_name_4_2, checkpoint_name_4_3, \
+                    checkpoint_name_3, checkpoint_name_3_2, checkpoint_name_3_3, \
+                    checkpoint_name_2, checkpoint_name_2_2, checkpoint_name_2_3, \
+                    checkpoint_name_1, checkpoint_name_1_2, checkpoint_name_1_3, \
+                    checkpoint_name_5, \
+                    checkpoint_name_6, \
+                    checkpoint_name_7, \
+                    checkpoint_name_8, \
+                    checkpoint_name_9, \
+                    checkpoint_name_10, \
                     #checkpoint_name_11, checkpoint_name_11_2, checkpoint_name_12, checkpoint_name_12_2, checkpoint_name_12_3, \
                     #checkpoint_name_13, checkpoint_name_13_2, \
-                    #checkpoint_name_14, checkpoint_name_14_2, checkpoint_name_14_3, checkpoint_name_14_4, \
+                    checkpoint_name_14, checkpoint_name_14_2, checkpoint_name_14_3, checkpoint_name_14_4, \
                     checkpoint_name_15, checkpoint_name_15_2, checkpoint_name_15_3, checkpoint_name_15_4, checkpoint_name_15_5, \
                     checkpoint_name_15_6, checkpoint_name_15_7 \
                     ]
 
-generate_predictions_multiple_models(checkpoint_names, 10, scoring="top_k", min_prob = 0.1, cutoff = 0.5)
+generate_predictions_multiple_models(checkpoint_names, 10000, scoring="top_k", min_prob = 0.1, cutoff = 0.5)
 print("\nGenerated predictions (or attempted) for "+ "???" + 
       " words from wordbank using the models " + str(checkpoint_names) )

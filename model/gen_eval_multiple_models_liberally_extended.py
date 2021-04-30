@@ -206,7 +206,12 @@ def generate_predictions_multiple_models(checkpoint_name_list, max_words, scorin
     print("\nOpened "+ score_file_path + " for writing.")
     score_file.write(str(checkpoint_name_list) + "\n")
     #print the words from wordbank used for generation.
-    score_file.write(str(used_wordbank) + "\n")
+    #score_file.write(str(used_wordbank) + "\n")
+    for word in used_wordbank:
+        if(last_word == word):
+            score_file.write(str(word) + "\n")
+        else:
+            score_file.write(str(word) + "\t")
     #First three runs had the for loops in the other order. Now, each row stands for a model.
     for checkpoint_name in checkpoint_name_list:
         for word in used_wordbank:
@@ -290,6 +295,21 @@ checkpoint_name_14_3 = 'beomi/kcbert-base-dev'
 checkpoint_name_14_4 = 'beomi/kcbert-large-dev'
 #https://huggingface.co/beomi/KcELECTRA-base not a masked LM?
 
+#Multi-lingual models listed at https://huggingface.co/transformers/multilingual.html
+#These require language embeddings.
+checkpoint_name_15 = 'xlm-mlm-ende-1024'
+checkpoint_name_15_2 = 'xlm-mlm-enfr-1024'
+checkpoint_name_15_3 = 'xlm-mlm-enro-1024'
+checkpoint_name_15_4 = 'xlm-mlm-xnli15-1024'
+checkpoint_name_15_5 = 'xlm-mlm-tlm-xnli15-1024' #MLM + Translation?
+#These don't require language embeddings
+checkpoint_name_15_6 = 'xlm-mlm-17-1280'
+checkpoint_name_15_7 = 'xlm-mlm-100-1280'
+#bert-base-multilingual-uncased
+#bert-base-multilingual-cased
+#xlm-roberta-base
+#xlm-roberta-large
+
 
 
 
@@ -307,7 +327,8 @@ checkpoint_names = [#checkpoint_name_4, checkpoint_name_4_2, checkpoint_name_4_3
                     #checkpoint_name_10, \
                     #checkpoint_name_11, checkpoint_name_11_2, checkpoint_name_12, checkpoint_name_12_2, checkpoint_name_12_3, \
                     #checkpoint_name_13, checkpoint_name_13_2, \
-                    checkpoint_name_14, checkpoint_name_14_2, checkpoint_name_14_3, checkpoint_name_14_4 \
+                    #checkpoint_name_14, checkpoint_name_14_2, checkpoint_name_14_3, checkpoint_name_14_4, \
+                    checkpoint_name_15, checkpoint_name_15_2, checkpoint_name_15_3, checkpoint_name_15_4, checkpoint_name_15_5 \
                     ]
 
 generate_predictions_multiple_models(checkpoint_names, 10, scoring="top_k", min_prob = 0.1, cutoff = 0.5)
