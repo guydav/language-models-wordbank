@@ -1,4 +1,4 @@
-The main model to run is https://github.com/guydav/language-models-wordbank/blob/master/model/gen_eval_multiple_models.py
+The main model to run is https://github.com/guydav/language-models-wordbank/blob/master/model/gen_eval_multiple_models.py. The newer version of it is https://github.com/guydav/language-models-wordbank/blob/master/model/gen_eval_multiple_models_liberally_extended_GPU.py which has more models to evaluate and also uses GPU (fails without).
 
 It has options to decide which models to run, how many words from wordbank to test on, how many sentences to sample, number of options to generate at each mask position etc.
 
