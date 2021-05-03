@@ -2,12 +2,13 @@ import datasets
 from transformers import AutoModelForMaskedLM, AutoTokenizer 
 from transformers import RobertaTokenizer, RobertaForMaskedLM
 import torch
-import sys, random
+import sys, random, os
+from dill._dill import check
 
 
 DEBUG = 1
 #Do not repeat this RUN_ID. Every time you run, use a new one. Also, use different ranges so that we don't overlap.
-RUN_ID = "16_GPU_29_models_all_words"
+RUN_ID = "22_GPU_44_models_all_childes_words"
 
 #Read words from wordbank
 def read_wordbank(wordbank):
@@ -73,7 +74,12 @@ print("\nFinished reading Childes data from " + str(no_lines_read) + " lines.")
 #won't have underestimated difficulty parameters. The normal
 #distribution assumption is only on ability parameter.
 
-
+def create_folder_if_not(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+        print("Created folder: ", path)
+    else:
+        print(path, " folder already exists.")
 
 #Generate predictions for wordbank words at their positions using multiple
 def generate_predictions_multiple_models(checkpoint_name_list, max_words, scoring="top_k", min_prob = 0.1, cutoff = 0.5):
@@ -101,6 +107,9 @@ def generate_predictions_multiple_models(checkpoint_name_list, max_words, scorin
         max_sentences_to_sample = 10#hyper parameter of sorts
         no_of_options = 20
         #If checkpoint_name has a /, we need to create a folder if it doesn't exist.
+        if ('/' in checkpoint_name):
+            folder_name, checkpoint_folderless_name = checkpoint_name.split("/")
+            create_folder_if_not("../output/" + folder_name)
         predictions_file_path = "../output/"+checkpoint_name+"_RUN_" + RUN_ID+"_predictions.tsv"
         predictions_file = open(predictions_file_path, "w")
         print("\nOpened "+ predictions_file_path + " for writing.")
@@ -152,9 +161,9 @@ def generate_predictions_multiple_models(checkpoint_name_list, max_words, scorin
                     #sentence.replace(, tokenizer.mask_token)
                     input = tokenizer.encode(sentence_masked, return_tensors="pt")
                     mask_token_index = torch.where(input == tokenizer.mask_token_id)[1]
-                    input_on_cuda = input.to(device)
+                    input = input.to(device)
                     #Need to convert to batch mode for faster inference
-                    output = model(input_on_cuda, return_dict=True)
+                    output = model(input, return_dict=True)
                     token_logits = output.logits
                     #Should we play with temperature?
                     mask_token_logits = token_logits[0, mask_token_index, :]
@@ -164,6 +173,8 @@ def generate_predictions_multiple_models(checkpoint_name_list, max_words, scorin
                     #[' else', ' exactly', ' ', ',', ' happened', ' people', ' what', 'What', ' time', ' we', ' little', ' you', '?', ' more', ' anyone', ' What', ' much', ' man', ' pictures', ' day']
                     top_k_tokens = torch.topk(mask_token_logits, no_of_options, dim=1).indices[0].tolist()
                     top_k_words = [tokenizer.decode(token) for token in top_k_tokens]
+                    #This line can be an issue. Had to write it as some models were outputting words like 'i n s e c t'
+                    top_k_words = [s.replace(" ", "") for s in top_k_words]
                     top_k_token_probs = torch.topk(mask_token_probs, no_of_options, dim=1).values[0].tolist()
                     if(DEBUG == 1):
                         print(top_k_words)
@@ -174,7 +185,7 @@ def generate_predictions_multiple_models(checkpoint_name_list, max_words, scorin
                         if word in top_k_words or ' '+word in top_k_words:
                             passed_among_sampled = passed_among_sampled + 1
                     else:
-                        #DEal with spaces
+                        #Deal with alternatives/synonyms
                         word_token_index = torch.where(top_k_words == word or top_k_words == ' '+word)
                         if(scoring == "min_prob"):
                             if top_k_token_probs[word_token_index] >= min_prob:
@@ -257,72 +268,126 @@ def generate_predictions_multiple_models(checkpoint_name_list, max_words, scorin
     score_file.close()
     print("\nClosed "+ score_file_path + " for writing.")
     
+#More probably available at https://huggingface.co/transformers/pretrained_models.html
 #MLMs availabel at https://huggingface.co/models?filter=masked-lm
-checkpoint_name_1 = "nyu-mll/roberta-base-1B-1"
+checkpoint_name_1 = "nyu-mll/roberta-base-1B-1"#478MB
 checkpoint_name_1_2 = "nyu-mll/roberta-base-1B-2"
 checkpoint_name_1_3 = "nyu-mll/roberta-base-1B-3"
 
-checkpoint_name_2 = "nyu-mll/roberta-base-100M-1"
+checkpoint_name_2 = "nyu-mll/roberta-base-100M-1"#478MB
 checkpoint_name_2_2 = "nyu-mll/roberta-base-100M-2"
 checkpoint_name_2_3 = "nyu-mll/roberta-base-100M-3"
 
-checkpoint_name_3 = "nyu-mll/roberta-base-10M-1"
+checkpoint_name_3 = "nyu-mll/roberta-base-10M-1"#478MB
 checkpoint_name_3_2 = "nyu-mll/roberta-base-10M-2"
 checkpoint_name_3_3 = "nyu-mll/roberta-base-10M-3"
 
-checkpoint_name_4 = "nyu-mll/roberta-med-small-1M-1"
+checkpoint_name_4 = "nyu-mll/roberta-med-small-1M-1"#174MB
 checkpoint_name_4_2 = "nyu-mll/roberta-med-small-1M-2"
 checkpoint_name_4_3 = "nyu-mll/roberta-med-small-1M-3"
 
-checkpoint_name_5 = 'bert-base-uncased'
+#https://huggingface.co/bert-base-uncased/tree/main
+checkpoint_name_5 = 'bert-base-uncased'#420MB
 checkpoint_name_6 = 'distilbert-base-uncased'
 
 checkpoint_name_7 = 'bert-base-multilingual-cased'
-checkpoint_name_8 = 'albert-base-v2'
-checkpoint_name_9 = 'bert-base-multilingual-uncased'
-checkpoint_name_10 = 'distilbert-base-multilingual-cased'
+checkpoint_name_8 = 'albert-base-v2'#45MB
+checkpoint_name_9 = 'bert-base-multilingual-uncased'#641MB
+checkpoint_name_10 = 'distilbert-base-multilingual-cased'#517MB
 
 #vinai models seem like character models?? Output: ['a n t', 'a n t s', 'a c t u a l' ....]
 #These are all very small models of size ~1MB
-#checkpoint_name_11 = 'vinai/phobert-base'
-#checkpoint_name_11_2 = 'vinai/phobert-large'
-#checkpoint_name_12 = 'vinai/bertweet-base'
-#checkpoint_name_12_2 ='vinai/bertweet-covid19-base-cased'
-#checkpoint_name_12_3 ='vinai/bertweet-covid19-base-uncased'
+checkpoint_name_11 = 'vinai/phobert-base'
+checkpoint_name_11_2 = 'vinai/phobert-large'
+checkpoint_name_12 = 'vinai/bertweet-base'
+checkpoint_name_12_2 ='vinai/bertweet-covid19-base-cased'
+checkpoint_name_12_3 ='vinai/bertweet-covid19-base-uncased'
 
 #https://huggingface.co/transformers/converting_tensorflow_models.html#xlm
 #checkpoint_name_13 = 'jplu/tf-xlm-roberta-base'
 #checkpoint_name_13_2 = 'jplu/tf-xlm-roberta-large'
 #https://huggingface.co/jplu/tf-xlm-r-ner-40-lang not a masked LM?
 
-
-
-checkpoint_name_14 = 'beomi/kcbert-base'
-checkpoint_name_14_2 = 'beomi/kcbert-large'
-checkpoint_name_14_3 = 'beomi/kcbert-base-dev'
-checkpoint_name_14_4 = 'beomi/kcbert-large-dev'
+#Some weights of the model checkpoint at beomi/kcbert-base-dev were not used when initializing BertForMaskedLM
+#BAD PERFORMANCE
+#checkpoint_name_14 = 'beomi/kcbert-base'
+#checkpoint_name_14_2 = 'beomi/kcbert-large'
+#checkpoint_name_14_3 = 'beomi/kcbert-base-dev'
+#checkpoint_name_14_4 = 'beomi/kcbert-large-dev'
 #https://huggingface.co/beomi/KcELECTRA-base not a masked LM?
 
 #Multi-lingual models listed at https://huggingface.co/transformers/multilingual.html
 #These require language embeddings.
-checkpoint_name_15 = 'xlm-mlm-ende-1024'
-checkpoint_name_15_2 = 'xlm-mlm-enfr-1024'
-checkpoint_name_15_3 = 'xlm-mlm-enro-1024'
-checkpoint_name_15_4 = 'xlm-mlm-xnli15-1024'
-checkpoint_name_15_5 = 'xlm-mlm-tlm-xnli15-1024' #MLM + Translation?
+checkpoint_name_15 = 'xlm-mlm-ende-1024'#796MB
+checkpoint_name_15_2 = 'xlm-mlm-enfr-1024'#792MB
+checkpoint_name_15_3 = 'xlm-mlm-enro-1024'#795MB
+#checkpoint_name_15_4 = 'xlm-mlm-xnli15-1024'#Gives weird predictions
+#Gives weird predictions ['?~Aت', 'ums', 'pan', 'und', 'seien', '...', 'sei', '·', 'einen', 'pet', 
+#'sum', 'ا?~Dصد', 'and', 'was', 'werde', '?~O?~B', 'cv', 'maan', '"', 'sowie']
+#checkpoint_name_15_5 = 'xlm-mlm-tlm-xnli15-1024' #MLM + Translation?
 #These don't require language embeddings
-checkpoint_name_15_6 = 'xlm-mlm-17-1280'
-checkpoint_name_15_7 = 'xlm-mlm-100-1280'
+checkpoint_name_15_6 = 'xlm-mlm-17-1280'#1.1GB
+checkpoint_name_15_7 = 'xlm-mlm-100-1280'#1.1GB
+#MLM or CLM?
+#xlm-clm-ende-1024
+#2.5GB
+#checkpoint_name_15_9 = 'xlm-mlm-en-2048'
+
 #bert-base-multilingual-uncased
 #bert-base-multilingual-cased
 #xlm-roberta-base
 #xlm-roberta-large
 
+checkpoint_name_16 = 'bert-base-cased'#416MB
+checkpoint_name_17 = 'bert-large-uncased'#1.3GB
+checkpoint_name_17_2 = 'bert-large-cased'#1.2GB
+checkpoint_name_18 = 'distilroberta-base'#316MB
+#Has two other models. Check. Raised the error about config.json
+#checkpoint_name_19 = 'TOD-BERT-JNT-V1'#420MB
+checkpoint_name_20 = 'bert-large-uncased-whole-word-masking'#1.3GB
+checkpoint_name_20_2 = 'bert-large-cased-whole-word-masking'#1.2GB
+#800MB+
+checkpoint_name_21 = 'albert-xxlarge-v2'#851MB
+checkpoint_name_22 = 'sshleifer/tiny-distilroberta-base'#603KB
+#https://github.com/google-research/albert
+checkpoint_name_23 = 'albert-large-v1'#68MB
+checkpoint_name_23_2 = 'albert-large-v2'#68MB
+checkpoint_name_23_3 = 'albert-base-v1'#45MB
+checkpoint_name_23_4 = 'albert-base-v2'#45MB
+checkpoint_name_23_5 = 'albert-xlarge-v2'#225MB
 
+checkpoint_name_24 = 'johngiorgi/declutr-sci-base'#421MB
+checkpoint_name_25 = 'bert-base-cased-finetuned-mrpc'#413MB
+#microsoft
+#OSError: Can't load config for 'microsoft/mpnet-base'
+#checkpoint_name_26 = 'microsoft/mpnet-base'
+#checkpoint_name_26_??? = 'microsoft/graphcodebert-base'
 
+#google
+checkpoint_name_27 = 'google/electra-small-generator'#52MB
+
+#OSError: Can't load weights for 'cardiffnlp/twitter-roberta-base'.
+#checkpoint_name_28 = 'cardiffnlp/twitter-roberta-base'#478MB
 
 
 #checkpoint_names = [checkpoint_name_1, checkpoint_name_2, checkpoint_name_3, checkpoint_name_4, checkpoint_name_5]
+#checkpoint_names = [checkpoint_name_4, checkpoint_name_4_2, checkpoint_name_4_3, \
+#                    checkpoint_name_3, checkpoint_name_3_2, checkpoint_name_3_3, \
+#                    checkpoint_name_2, checkpoint_name_2_2, checkpoint_name_2_3, \
+#                    checkpoint_name_1, checkpoint_name_1_2, checkpoint_name_1_3, \
+#                    checkpoint_name_5, \
+#                    checkpoint_name_6, \
+#                    checkpoint_name_7, \
+#                    checkpoint_name_8, \
+#                    checkpoint_name_9, \
+#                    checkpoint_name_10, \
+#                    #checkpoint_name_11, checkpoint_name_11_2, checkpoint_name_12, checkpoint_name_12_2, checkpoint_name_12_3, \
+#                    #checkpoint_name_13, checkpoint_name_13_2, \
+#                    checkpoint_name_14, checkpoint_name_14_2, checkpoint_name_14_3, checkpoint_name_14_4, \
+#                    checkpoint_name_15, checkpoint_name_15_2, checkpoint_name_15_3, checkpoint_name_15_4, checkpoint_name_15_5, \
+#                    checkpoint_name_15_6, checkpoint_name_15_7 \
+#                    ]
+
 checkpoint_names = [checkpoint_name_4, checkpoint_name_4_2, checkpoint_name_4_3, \
                     checkpoint_name_3, checkpoint_name_3_2, checkpoint_name_3_3, \
                     checkpoint_name_2, checkpoint_name_2_2, checkpoint_name_2_3, \
@@ -333,13 +398,21 @@ checkpoint_names = [checkpoint_name_4, checkpoint_name_4_2, checkpoint_name_4_3,
                     checkpoint_name_8, \
                     checkpoint_name_9, \
                     checkpoint_name_10, \
-                    #checkpoint_name_11, checkpoint_name_11_2, checkpoint_name_12, checkpoint_name_12_2, checkpoint_name_12_3, \
-                    #checkpoint_name_13, checkpoint_name_13_2, \
-                    checkpoint_name_14, checkpoint_name_14_2, checkpoint_name_14_3, checkpoint_name_14_4, \
-                    checkpoint_name_15, checkpoint_name_15_2, checkpoint_name_15_3, checkpoint_name_15_4, checkpoint_name_15_5, \
-                    checkpoint_name_15_6, checkpoint_name_15_7 \
+                    checkpoint_name_11, checkpoint_name_11_2, checkpoint_name_12, checkpoint_name_12_2, checkpoint_name_12_3, \
+                    checkpoint_name_15, checkpoint_name_15_2, checkpoint_name_15_3, \
+                    checkpoint_name_15_6, checkpoint_name_15_7, \
+                    checkpoint_name_16, \
+                    checkpoint_name_17, checkpoint_name_17_2, \
+                    checkpoint_name_18, \
+                    checkpoint_name_20, checkpoint_name_20_2, \
+                    checkpoint_name_21, \
+                    checkpoint_name_22, \
+                    checkpoint_name_23, checkpoint_name_23_2, checkpoint_name_23_3, checkpoint_name_23_4, checkpoint_name_23_5, \
+                    checkpoint_name_24, \
+                    checkpoint_name_25, \
+                    checkpoint_name_27
                     ]
 
-generate_predictions_multiple_models(checkpoint_names, 10000, scoring="top_k", min_prob = 0.1, cutoff = 0.5)
+generate_predictions_multiple_models(checkpoint_names, 11000, scoring="top_k", min_prob = 0.1, cutoff = 0.5)
 print("\nGenerated predictions (or attempted) for "+ "???" + 
       " words from wordbank using the models " + str(checkpoint_names) )
