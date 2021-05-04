@@ -22,7 +22,7 @@ DB_PATH = pathlib.Path(os.getcwd()).parent.absolute() / 'data' / DB_FILE
 parser = argparse.ArgumentParser()
 
 parser.add_argument('-c', '--checkpoint-name', required=True)
-parser.add_argument('-o', '--output-file', default=None)
+parser.add_argument('-o', '--output-folder', default=None)
 DEFAULT_SENTENCES_PER_WORD = 10
 parser.add_argument('-s', '--sentences-per-word', default=DEFAULT_SENTENCES_PER_WORD)
 DEFAULT_ALTERNATIVE_WORDS = 10
@@ -61,12 +61,14 @@ def main(args):
         random_seed=args.random_seed, same_category_words=not args.different_category_alternative_words,
         original_dataset=args.original_dataset)
 
-    if args.output_file is None:
-        name = args.checkpoint_name.replace('/', '_')
-        args.output_file = f'{name}_sentences-{args.sentences_per_word}_words-{args.alternative_words}_seed-{args.random_seed}'
-        args.output_file += f'_{args.different_category_alternative_words and "diff" or "same"}-category-words_{args.original_dataset is not None and args.original_dataset or "both-datasets"}.csv'
+    name = args.checkpoint_name.replace('/', '_')
+    if args.output_folder is None:
+        args.output_folder = '.'
 
-    results_df.to_csv(args.output_file)
+    output_file = f'{name}_sentences-{args.sentences_per_word}_words-{args.alternative_words}_seed-{args.random_seed}'
+    output_file += f'_{args.different_category_alternative_words and "diff" or "same"}-category-words_{args.original_dataset is not None and args.original_dataset or "both-datasets"}.csv'
+
+    results_df.to_csv(pathlib.Path(args.output_folder).absolute() / output_file)
         
 
 if __name__ == '__main__':
