@@ -45,19 +45,21 @@ def discriminative_task_single_word(
 
     word_query = session.query(WordbankWord.id, WordbankWord.word)
     if same_category_words:
-        word_query = word_query.filter(WordbankWord.category == target_wordbank_word.category)
+        word_query = word_query.filter(WordbankWord.category == target_wordbank_word.category).filter(WordbankWord.id != target_wordbank_word.id)
     else:
         word_query = word_query.filter(WordbankWord.category != target_wordbank_word.category)
     ids_and_words_per_sentence = select_k_random_n_times(word_query.all(), n_alternative_words, n_sentences_per_word)
     word_ids_per_sentence, words_per_sentence = list(zip(*[list(zip(*x)) for x in ids_and_words_per_sentence]))
 
-    [list(words).insert(0, target_wordbank_word.word) for words in words_per_sentence]
+    word_ids_per_sentence = [list(word_ids) for word_ids in word_ids_per_sentence]
+    [word_ids.insert(0, target_wordbank_word.id) for word_ids in word_ids_per_sentence]
+    words_per_sentence = [list(words) for words in words_per_sentence]
+    [words.insert(0, target_wordbank_word.word) for words in words_per_sentence]
 
     sentence_copies = [s.replace(target_wordbank_word.word, w, 1) 
                         for s, words in zip(sentences, words_per_sentence)
                         for w in words]
     model_sentence_scores = [scorer.score_sentences(sentence_copies) for scorer in model_scorers]
-
     all_results = []
 
     for model_name, model_raw_scores in zip(model_names, model_sentence_scores):
@@ -69,8 +71,8 @@ def discriminative_task_single_word(
                 model_name=model_name, 
                 sentence_id=sentence_id, 
                 sentence_text=sentence_text, 
-                alt_word_ids=word_ids_per_sentence[s],
-                alt_words=words_per_sentence[s],
+                compared_word_ids=word_ids_per_sentence[s],
+                compared_words=words_per_sentence[s],
                 sentence_scores=sentence_scores,
                 result=result 
             ))
