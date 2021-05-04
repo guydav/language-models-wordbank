@@ -36,9 +36,14 @@ def discriminative_task_single_word(
         sentence_query = sentence_query.filter(Sentence.original_dataset == original_dataset)
 
     word_sentences = sentence_query.all()
+    
+    if len(word_sentences) == 0:
+        warnings.warn(f'For word {target_wordbank_word.word} (id {target_wordbank_word.id}), there are no sentences...', UserWarning)
+        return []
+    
     if len(word_sentences) < n_sentences_per_word:
         warnings.warn(f'For word {target_wordbank_word.word} (id {target_wordbank_word.id}), only found {len(word_sentences)} sentences, fewer than the requested {n_sentences_per_word}. Skipping...', UserWarning)
-        return []
+        n_sentences_per_word = len(word_sentences)
     
     ids_and_sentences = select_k_random(word_sentences, n_sentences_per_word)
     sentence_ids, sentences = zip(*ids_and_sentences)
