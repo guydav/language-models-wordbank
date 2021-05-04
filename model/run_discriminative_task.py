@@ -1,10 +1,15 @@
 import argparse
+import os
+import pathlib
+import warnings
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 import torch
+import mxnet as mx
 from transformers import AutoTokenizer, AutoModelForMaskedLM
+from mlm.models import get_pretrained
 from mlm.scorers import MLMScorerPT 
 from wordbank_tasks import discriminative_task_all_words, smallest_nll_criterion
 
@@ -28,10 +33,16 @@ parser.add_argument('-d', '--original-dataset', default=None)
 parser.add_argument('--different-category-alternative-words', action='store_true')
 
 
-def scorer_from_transformers_checkpoint(checkpotint_name, contexts, device):
-    tokenizer = AutoTokenizer.from_pretrained(checkpotint_name)
-    model = AutoModelForMaskedLM.from_pretrained(checkpotint_name)
-    return MLMScorerPT(model, None, tokenizer, contexts, device=device)
+def scorer_from_transformers_checkpoint(checkpoint_name, contexts, device):
+    try:
+        model, vocab, tokenizer = get_pretrained(ctxs=contexts, name=checkpoint_name)
+    except ValueError as e:
+        print(f'mlm.models.get_pretrained failed, defaulting to Transformers: {e.args}')
+        model = AutoModelForMaskedLM.from_pretrained(checkpoint_name)
+        tokenizer = AutoTokenizer.from_pretrained(checkpoint_name)
+        vocab = None
+
+    return MLMScorerPT(model, vocab, tokenizer, ctxs=contexts, device=device)
 
 
 def main(args):
@@ -41,6 +52,8 @@ def main(args):
     engine = create_engine(f'sqlite:///{DB_PATH}')
     Session = sessionmaker(bind=engine)
     
+    warnings.filterwarnings('ignore', category=UserWarning, module='gluonnlp.data')
+
     results_df = discriminative_task_all_words(
         session_maker=Session, n_sentences_per_word=args.sentences_per_word,
         n_alternative_words=args.alternative_words, model_names=(args.checkpoint_name,),

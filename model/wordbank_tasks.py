@@ -1,7 +1,8 @@
-from model.dataset_orm import OriginalDataset, Sentence
+from dataset_orm import OriginalDataset, Sentence
 import numpy as np
 import pandas as pd
 import tqdm
+import warnings
 from dataset_orm import *
 
 
@@ -13,7 +14,9 @@ def select_k_random_n_times(items, k, n):
 
 
 def smallest_nll_criterion(scores):
-    return np.argmax(scores) == 0    
+    if scores and len(scores) > 0:
+        return np.argmax(scores) == 0    
+    return False
 
 
 def discriminative_task_single_word(
@@ -33,6 +36,10 @@ def discriminative_task_single_word(
         sentence_query = sentence_query.filter(Sentence.original_dataset == original_dataset)
 
     word_sentences = sentence_query.all()
+    if len(word_sentences) < n_sentences_per_word:
+        warnings.warn(f'For word {target_wordbank_word.word} (id {target_wordbank_word.id}), only found {len(word_sentences)} sentences, fewer than the requested {n_sentences_per_word}. Skipping...', UserWarning)
+        return []
+    
     ids_and_sentences = select_k_random(word_sentences, n_sentences_per_word)
     sentence_ids, sentences = zip(*ids_and_sentences)
 
@@ -105,4 +112,5 @@ def discriminative_task_all_words(session_maker,
 
         all_results.extend(target_word_results)
 
-    return pd.DataFrame(discriminative_task_all_words)
+    return pd.DataFrame.from_records(all_results)
+
