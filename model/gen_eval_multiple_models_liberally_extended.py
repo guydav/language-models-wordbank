@@ -77,7 +77,8 @@ print("\nFinished reading Childes data from " + str(no_lines_read) + " lines.")
 
 #Generate predictions for wordbank words at their positions using multiple
 def generate_predictions_multiple_models(checkpoint_name_list, max_words, scoring="top_k", min_prob = 0.1, cutoff = 0.5):  
-    ignore_word_list = ['babysitter', 'child\'s own name', 'pet\'s name']
+    #ignore_word_list = ['babysitter', 'child\'s own name', 'pet\'s name']
+    ignore_word_list = ['child\'s own name', 'pet\'s name']
     score_dictionaries = {}
     used_wordbank = []
     used_wordbank_indicator = 0

@@ -87,7 +87,8 @@ def generate_predictions_multiple_models(checkpoint_name_list, max_words, scorin
         print("CUDA not available. Exiting...")
         sys.exit()
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    ignore_word_list = ['babysitter', 'child\'s own name', 'pet\'s name']
+    #ignore_word_list = ['babysitter', 'child\'s own name', 'pet\'s name']
+    ignore_word_list = ['child\'s own name', 'pet\'s name']
     score_dictionaries = {}
     used_wordbank = []
     used_wordbank_indicator = 0

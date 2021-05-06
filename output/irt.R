@@ -45,9 +45,9 @@ PRIOR = (1-587, a1, lnorm, 0, 1)'
 lognormal_model <- mirt.model(lognormal_prior)
 #twoPL_run10_lognormal_prior <- mirt(lang_acq_run10_all_words_tsv, lognormal_model)
 
-#FIGURE OUT why RUN_16 has only 586 words used.
-normal_prior <- 'F = 1-586
-PRIOR = (1-586, a1, norm, 2.6, 1)' 
+#RUN_16 has only 586 words used because of ignoring 'babysitter'
+normal_prior <- 'F = 1-587
+PRIOR = (1-587, a1, norm, 2.6, 1)' 
 normal_model <- mirt.model(normal_prior)
 #technical_parameters <- 'NCYCLES = 5'
 irt_model <- mirt(responses, normal_model)
