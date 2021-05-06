@@ -1,56 +1,79 @@
+args = commandArgs(trailingOnly=TRUE)
+
+#https://www.r-bloggers.com/2015/09/passing-arguments-to-an-r-script-from-command-lines/
+# test if there is at least one argument: if not, return an error
+if (length(args) != 4) {
+	stop("Four arguments must be supplied (responses_file, model_names_file, item_parameters_output_file, ability_output_file)", call.=FALSE)
+} #else if (length(args)==2) {
+	# default output file
+	#args[2] = "out.txt"
+#}
+
 library(mirt) #make mirt package available
 
-lang_acq_run08 <- read.csv("RUN_08_scores_for_R.csv", header = TRUE)
-lang_acq_run09 <- read.csv("RUN_09_100words_scores_for_R.csv", header = TRUE)
-lang_acq_run09_tsv <- read.table("RUN_09_100words_scores_for_R.tsv", header = TRUE)
-lang_acq_run10_all_words_tsv <- read.table("RUN_10_all_words_scores_for_R.tsv", header = TRUE)
-lang_acq_run16_29_models_all_words_tsv <- read.table("RUN_16_GPU_29_models_all_words_scores_for_R.tsv", header = TRUE)
+responses <- read.table(args[1], header = TRUE)
+print("Responses file is read.")
+model_names <- read.table(args[2], header = FALSE)
+print("Model names file is read.")
+names(model_names) <- c("name")
+default_model_names <- data.frame(c("all-1", "all-0")) 
+names(default_model_names) <- c("name")                 
 
+#Adding observations using rbind() function  
+full_model_names <- rbind(model_names, default_model_names)
+
+#addition <- list("all-1", "all-0")
+#model_names_extended <- c(model_names, addition)
+#dim(model_names_extended)
+#display(full_model_names)
+#full_model_names
+init_theta <- data.frame(1:nrow(full_model_names))
+names(init_theta) <- c("theta")
+scores <- data.frame (
+		theta = init_theta,
+		model_names = full_model_names
+)
 
 #one factor, 2PL default item types (2PL)
-#The second argument is the no of factors (we give 1 as we assume only one ability/latent factor)
-twoPL_run08 <- mirt(lang_acq_run08, 1)
-twoPL_run09 <- mirt(lang_acq_run09, 1)
-twoPL_run10 <- mirt(lang_acq_run10_all_words_tsv, 1)
 #Page 116 of the documentation
 model <- 'F = 1-587
 		CONSTRAIN = (1-587, a1)'
-twoPL_run10_equal_slopes <- mirt(lang_acq_run10_all_words_tsv, model)
-#Page 116 of the documentation
-twoPL_run10_exploratory_2factor <- mirt(lang_acq_run10_all_words_tsv, 2)
 
 #Page 125, 127 of the documentation
 lognormal_prior <- 'F = 1-587
 PRIOR = (1-587, a1, lnorm, 0, 1)' 
 lognormal_model <- mirt.model(lognormal_prior)
-twoPL_run10_lognormal_prior <- mirt(lang_acq_run10_all_words_tsv, lognormal_model)
+#twoPL_run10_lognormal_prior <- mirt(lang_acq_run10_all_words_tsv, lognormal_model)
 
 #FIGURE OUT why RUN_16 has only 586 words used.
 normal_prior <- 'F = 1-586
 PRIOR = (1-586, a1, norm, 2.6, 1)' 
 normal_model <- mirt.model(normal_prior)
-twoPL_run16_29_models_all_words_normal_prior <- mirt(lang_acq_run16_29_models_all_words_tsv, normal_model)
+#technical_parameters <- 'NCYCLES = 5'
+irt_model <- mirt(responses, normal_model)
 
-#help('coef-method')
-
-#coef(twoPL_run08) #in slope-intercept form, use b = -d/a to obtain traditional metric
-#(b2 <- -0.808/1.081)
+irt_parameters <- coef(irt_model, IRTpars = TRUE, simplify=TRUE)
+#irt_parameters.to_tsv(args[3])
+#https://stackoverflow.com/questions/17108191/how-to-export-proper-tsv/17108345
+#write.table(irt_parameters, file=args[3], quote=FALSE, sep='\t', col.names = NA)
+#print("Item parameters file is written.")
 
 #original IRT metric for all items can be obtained using
-coef(twoPL_run08, IRTpars = TRUE, simplify=TRUE)
-
-#imposed tracelines
-help('plot-method')
-plot(twoPL_run09, type = 'trace')
-plot(twoPL_run09, type = 'trace', auto.key = FALSE) #without legend
-
-#???
-plot(twoPL_run10, type = 'info')
+#coef(irt_parameters, IRTpars = TRUE, simplify=TRUE)
 
 #Page 59? of Documentation
 #from Example_07.R
-help(fscores)
 # basic fscores inputs using EAP estimator
-fscores(twoPL_run10)
+#fscores(twoPL_run10)
 #shows for each individual. If full.scores = FALSE, shows for each unique response pattern
-fscores(twoPL_run10, full.scores=TRUE)
+thetas <- fscores(irt_model, full.scores=TRUE)
+scores$theta <- thetas
+
+#scores
+
+#scores.to_tsv(args[4])
+write.table(scores, file=args[4], quote=FALSE, sep='\t', col.names = NA)
+print("Ability parameters file is written.")
+
+write.table(irt_parameters, file=args[3], quote=FALSE, sep='\t', col.names = NA)
+print("Item parameters file is written.")
