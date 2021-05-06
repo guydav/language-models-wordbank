@@ -1,0 +1,14 @@
+ 0: nyu-mll/roberta-base-1B-3
+ 1: nyu-mll/roberta-base-1B-1
+ 2: nyu-mll/roberta-base-100M-1
+ 3: nyu-mll/roberta-med-small-1M-3
+ 4: bert-base-uncased
+ 5: nyu-mll/roberta-base-100M-3
+ 6: nyu-mll/roberta-med-small-1M-1
+ 7: nyu-mll/roberta-base-10M-3
+ 8: nyu-mll/roberta-base-10M-1
+ 9: distilbert-base-uncased
+10: nyu-mll/roberta-base-1B-2
+11: nyu-mll/roberta-med-small-1M-2
+12: nyu-mll/roberta-base-100M-2
+13: nyu-mll/roberta-base-10M-2

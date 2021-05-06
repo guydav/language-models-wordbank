@@ -42,7 +42,7 @@ def discriminative_task_single_word(
         return []
     
     if len(word_sentences) < n_sentences_per_word:
-        warnings.warn(f'For word {target_wordbank_word.word} (id {target_wordbank_word.id}), only found {len(word_sentences)} sentences, fewer than the requested {n_sentences_per_word}. Skipping...', UserWarning)
+        warnings.warn(f'For word {target_wordbank_word.word} (id {target_wordbank_word.id}), only found {len(word_sentences)} sentences, fewer than the requested {n_sentences_per_word}.', UserWarning)
         n_sentences_per_word = len(word_sentences)
     
     ids_and_sentences = select_k_random(word_sentences, n_sentences_per_word)
