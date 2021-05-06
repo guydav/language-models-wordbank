@@ -202,10 +202,17 @@ def generate_predictions_multiple_models(checkpoint_name_list, max_words, scorin
         last_checkpoint_name = checkpoint_name
         last_word = word
     
+    model_file_path = "../output/RUN_" + RUN_ID + "_models.txt"
+    model_file = open(model_file_path, "w")
+    print("\nOpened "+ model_file_path + " for writing.")
+    for checkpoint_name in checkpoint_name_list:
+        model_file.write(str(checkpoint_name) + "\n")
+    model_file.close()
+    print("\nClosed "+ model_file_path + " for writing.")
+    
     score_file_path = "../output/RUN_" + RUN_ID + "_scores.tsv"
     score_file = open(score_file_path, "w")
     print("\nOpened "+ score_file_path + " for writing.")
-    score_file.write(str(checkpoint_name_list) + "\n")
     #print the words from wordbank used for generation.
     #score_file.write(str(used_wordbank) + "\n")
     for word in used_wordbank:
@@ -213,7 +220,6 @@ def generate_predictions_multiple_models(checkpoint_name_list, max_words, scorin
             score_file.write(str(word) + "\n")
         else:
             score_file.write(str(word) + "\t")
-    
     #First three runs had the for loops in the other order. Now, each row stands for a model.
     for checkpoint_name in checkpoint_name_list:
         for word in used_wordbank:

@@ -50,7 +50,7 @@ normal_prior <- 'F = 1-587
 PRIOR = (1-587, a1, norm, 2.6, 1)' 
 normal_model <- mirt.model(normal_prior)
 #technical_parameters <- 'NCYCLES = 5'
-irt_model <- mirt(responses, normal_model)
+irt_model <- mirt(responses, model)
 
 irt_parameters <- coef(irt_model, IRTpars = TRUE, simplify=TRUE)
 #irt_parameters.to_tsv(args[3])
