@@ -121,7 +121,7 @@ def discriminative_task_all_words(session_maker,
     n_sentences_per_word, n_alternative_words, 
     model_names, model_scorers, criterion_func, 
     random_seed=33, same_category_words=True,
-    original_dataset=None):
+    original_dataset=None, criterion_func_kwargs=None):
 
     np.random.seed(random_seed)
     session = session_maker()
@@ -143,7 +143,8 @@ def discriminative_task_all_words(session_maker,
             session_maker=session_maker, target_wordbank_word=target_word,
             n_sentences_per_word=n_sentences_per_word, n_alternative_words=n_alternative_words, 
             model_names=model_names, model_scorers=model_scorers, criterion_func=criterion_func, 
-            random_seed=random_seed, same_category_words=same_category_words, original_dataset=original_dataset)
+            random_seed=random_seed, same_category_words=same_category_words, 
+            original_dataset=original_dataset, criterion_func_kwargs=criterion_func_kwargs)
 
         for result in target_word_results:
             result['word_id'] = target_word.id
