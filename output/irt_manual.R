@@ -37,8 +37,10 @@ twoPL_run16_29_models_all_words_normal_prior <- mirt(lang_acq_run16_29_models_al
 #(b2 <- -0.808/1.081)
 
 #original IRT metric for all items can be obtained using
-coef(twoPL_run08, IRTpars = TRUE, simplify=TRUE)
+coef_run16 <- coef(twoPL_run16_29_models_all_words_normal_prior, IRTpars = TRUE, simplify=TRUE)
 coef_run16 <- coef(twoPL_run16_29_models_all_words_normal_prior)
+#coef_run16 <- coef(twoPL_run16_29_models_all_words_normal_prior, as.data.frame = TRUE)
+
 
 #imposed tracelines
 help('plot-method')
