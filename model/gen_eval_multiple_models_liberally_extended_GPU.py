@@ -3,12 +3,12 @@ from transformers import AutoModelForMaskedLM, AutoTokenizer
 from transformers import RobertaTokenizer, RobertaForMaskedLM
 import torch
 import sys, random, os
-from dill._dill import check
+from math import ceil
 
 
 DEBUG = 1
 #Do not repeat this RUN_ID. Every time you run, use a new one. Also, use different ranges so that we don't overlap.
-RUN_ID = "22_GPU_44_models_all_childes_words"
+RUN_ID = "26_GPU_44_models_all_childes_bAbi_words"
 
 #Read words from wordbank
 def read_wordbank(wordbank):
@@ -31,48 +31,52 @@ print("\nWordbank: ", wordbank)
 #'this', 'this little piggy', 'yourself', 'yucky', 'yum yum', 'zebra', 'zipper', 'zoo']
 
 #Read childes sentences along with the matches from wordbank
-def read_childes(childes_sentences, word_occurences_in_childes):
+def read_dataset(dataset_sentences, word_occurences_in_dataset, dataset_file_path):
     i = 0
-    with open("../data/childes_wordbank_cleaned_data.tsv", 'r') as childes_file:
+    with open(dataset_file_path, 'r') as dataset_file:
         #Store in hashmaps? Or any other better methods? The size is small
         #and maynot require a database.
         #https://huggingface.co/docs/datasets/loading_datasets.html
-        for line in childes_file:
+        for line in dataset_file:
             if(i > 0):
-                gloss, matches, start, end, num_tokens, target_child_age, type = line.split("\t", 7)
+                if('childes' in dataset_file_path or 'Childes' in dataset_file_path):
+                    sentence, matches, start, end, num_tokens, target_child_age, type = line.split("\t", 7)
+                elif('babi' in dataset_file_path or 'bAbi' in dataset_file_path):
+                    sentence, matches, start, end, num_words, sentence_length = line.split("\t", 6)
+                else:
+                    print("File path given has neither 'childes'/'Childes' nor 'babi'/'bAbi' in its name. Exiting now...")
+                    print("File path to be rectified: " + str(dataset_file_path))
+                    sys.exit()
                 matches_as_list = matches.split(", ")
                 starts_as_list = start.split(", ")
                 ends_as_list = end.split(", ")
                 
-                childes_sentences.append(gloss)
-                #Tokens, age, type data not being stored as of now.
+                dataset_sentences.append(sentence)
+                #Tokens, age, type, num_words, sentence_length data not being stored as of now.
                 j = 0
                 for match in matches_as_list:
                     start = starts_as_list[j]
                     end = ends_as_list[j]
-                    word_occurence_list = word_occurences_in_childes.get(match, [])
+                    word_occurence_list = word_occurences_in_dataset.get(match, [])
                     word_occurence_list.append((i-1, start, end))#ERROR??
-                    word_occurences_in_childes[match] = word_occurence_list
+                    word_occurences_in_dataset[match] = word_occurence_list
                     j = j + 1
                 #print(match, start, end)
-                if(i == 11):
-                    print("\nPrinting a few sentences and word occurences from childes.")
-                    print(childes_sentences)
-                    print(word_occurences_in_childes)
+                if(i == 3 and len(dataset_sentences) < 10):
+                    print("\nPrinting a few sentences and word occurences from the dataset.")
+                    print(dataset_sentences)
+                    print(word_occurences_in_dataset)
                     #break
             i = i + 1
-    childes_file.close()
+    dataset_file.close()
     return i
 
 
-childes_sentences = []
-word_occurences_in_childes = {}
-no_lines_read = read_childes(childes_sentences, word_occurences_in_childes)
-print("\nFinished reading Childes data from " + str(no_lines_read) + " lines.")
+dataset_sentences = []
+word_occurences_in_dataset = {}
+childes_file_path = "../data/childes_wordbank_cleaned_data.tsv"
+bAbi_file_path = "../data/babi_line_wordbank_cleaned_data.tsv"
 
-#When and if we're skipping multi-word wordbank words, IRT parameters
-#won't have underestimated difficulty parameters. The normal
-#distribution assumption is only on ability parameter.
 
 def create_folder_if_not(path):
     if not os.path.exists(path):
@@ -82,11 +86,23 @@ def create_folder_if_not(path):
         print(path, " folder already exists.")
 
 #Generate predictions for wordbank words at their positions using multiple
-def generate_predictions_multiple_models(checkpoint_name_list, max_words, scoring="top_k", min_prob = 0.1, cutoff = 0.5):
+def generate_predictions_multiple_models(checkpoint_name_list, max_words_to_evaluate = 11, 
+                                         scoring="top_k", k = 20, no_of_sentences_per_word = 10, min_prob = 0.1, 
+                                         cutoff = 0.5, datasets="both"):
     if(not torch.cuda.is_available()):
         print("CUDA not available. Exiting...")
         sys.exit()
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    
+    if(datasets in ["childes", "Childes", "both"]):
+        no_lines_read = read_dataset(dataset_sentences, word_occurences_in_dataset, childes_file_path)
+        print("\nFinished reading Childes data from " + str(no_lines_read) + " lines.")
+    if(datasets in ["babi", "bAbi", "both"]):
+        no_lines_read = read_dataset(dataset_sentences, word_occurences_in_dataset, bAbi_file_path)
+        print("\nFinished reading bAbi data from " + str(no_lines_read) + " lines.")
+    if(datasets not in ["childes", "Childes", "babi", "bAbi", "both"]):
+        print("Options for datasets argument: childes, Childes, babi, bAbi, both")
+    
     #ignore_word_list = ['babysitter', 'child\'s own name', 'pet\'s name']
     ignore_word_list = ['child\'s own name', 'pet\'s name']
     score_dictionaries = {}
@@ -98,15 +114,21 @@ def generate_predictions_multiple_models(checkpoint_name_list, max_words, scorin
         #This GPU code can be written better
         #https://wandb.ai/wandb/common-ml-errors/reports/How-To-Use-GPU-with-PyTorch---VmlldzozMzAxMDk
         model.to(device)
-        #Need to move to GPU?
         print("\nModel initialized: " + checkpoint_name + "\n")
         sm = torch.nn.Softmax()
         
         score_dictionaries[checkpoint_name] = {}
         
         i = 0
-        max_sentences_to_sample = 10#hyper parameter of sorts
-        no_of_options = 20
+        max_sentences_to_sample = no_of_sentences_per_word#hyper parameter of sorts
+        if(scoring == "top_k"):
+            no_of_options = k
+        elif(scoring == "min_prob"):
+            assert min_prob > 0
+            no_of_options = ceil(1/min_prob)
+        elif(scoring == "min_rel_prob"):
+            no_of_options = max(40, ceil(1/min_rel_prob))#Not correct. Deal with this later. 40 maynot be enough
+            
         #If checkpoint_name has a /, we need to create a folder if it doesn't exist.
         if ('/' in checkpoint_name):
             folder_name, checkpoint_folderless_name = checkpoint_name.split("/")
@@ -127,7 +149,7 @@ def generate_predictions_multiple_models(checkpoint_name_list, max_words, scorin
                     print("\n Skipped the word '"+ word + "' for being in ignore list. Not scored.")
                 #score_file.write(word+"\t \n")
                 continue#skip words like babysitter (too specific)
-            word_occurence_list = word_occurences_in_childes.get(word, [])
+            word_occurence_list = word_occurences_in_dataset.get(word, [])
             if(len(word_occurence_list) > max_sentences_to_sample):
                 sampled = random.sample(word_occurence_list, max_sentences_to_sample)
             else:
@@ -147,7 +169,7 @@ def generate_predictions_multiple_models(checkpoint_name_list, max_words, scorin
                     if(DEBUG == 1):
                         print("\n", sample)
                     sentence_id, start, end = sample
-                    sentence = childes_sentences[sentence_id]
+                    sentence = dataset_sentences[sentence_id]
                     if int(start) == 0:
                         sentence_start = ""
                     else:
@@ -191,15 +213,16 @@ def generate_predictions_multiple_models(checkpoint_name_list, max_words, scorin
                         if(scoring == "min_prob"):
                             if top_k_token_probs[word_token_index] >= min_prob:
                                 passed_among_sampled = passed_among_sampled + 1
-                        elif(scoring == "min_rel_prob"):
+                        elif(scoring == "min_rel_prob"):#Not properly implemented
                             if top_k_token_probs[word_token_index] >= min_prob * max(top_k_token_probs):
                                 passed_among_sampled = passed_among_sampled + 1
                             
-                    predictions_file.write(word+"\t"+str(sentence_id)+"\t"+childes_sentences[sentence_id]+
+                    predictions_file.write(word+"\t"+str(sentence_id)+"\t"+dataset_sentences[sentence_id]+
                                            "\t"+start+"\t"+end+"\t"+
                                            ', '.join(top_k_words)+"\t"+
                                            #', '.join([str(elem) for elem in top_k_tokens])+"\t"+
                                            ', '.join([str(elem) for elem in top_k_token_probs])+"\n")
+                    del output #To decrease the GPU memory usage
                     
                 if(DEBUG == 1):
                     print("\n", word, ": ", passed_among_sampled, " / ", len_sampled)
@@ -211,7 +234,7 @@ def generate_predictions_multiple_models(checkpoint_name_list, max_words, scorin
                     score_dictionaries[checkpoint_name][word] = "0"
                     #score_file.write(word+"\t0\n")
             i = i + 1
-            if i > max_words:
+            if i > max_words_to_evaluate:
                 break
         predictions_file.close()
         print("\nClosed "+ predictions_file_path + " for writing.")
@@ -220,6 +243,7 @@ def generate_predictions_multiple_models(checkpoint_name_list, max_words, scorin
         #for printing out "\n" at the end of row
         last_checkpoint_name = checkpoint_name
         last_word = word
+    print("torch.cuda.memory_allocated(): " + str(torch.cuda.memory_allocated()))
     
     model_file_path = "../output/RUN_" + RUN_ID + "_models.txt"
     model_file = open(model_file_path, "w")
@@ -421,6 +445,10 @@ checkpoint_names = [checkpoint_name_4, checkpoint_name_4_2, checkpoint_name_4_3,
                     checkpoint_name_27
                     ]
 
-generate_predictions_multiple_models(checkpoint_names, 11000, scoring="top_k", min_prob = 0.1, cutoff = 0.5)
+
+datasets_to_be_read = "both"#options: "childes" or "Childes", "bAbi" or "babi", "both"
+generate_predictions_multiple_models(checkpoint_names, max_words_to_evaluate = 11000, 
+                                     scoring="top_k", k = 20, no_of_sentences_per_word = 10,
+                                     min_prob = 0.1, cutoff = 0.5, datasets = datasets_to_be_read)
 print("\nGenerated predictions (or attempted) for "+ "???" + 
       " words from wordbank using the models " + str(checkpoint_names) )
