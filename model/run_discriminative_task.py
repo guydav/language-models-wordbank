@@ -11,7 +11,7 @@ import mxnet as mx
 from transformers import AutoTokenizer, AutoModelForMaskedLM
 from mlm.models import get_pretrained
 from mlm.scorers import MLMScorerPT 
-from wordbank_tasks import discriminative_task_all_words, smallest_nll_criterion
+from wordbank_tasks import discriminative_task_all_words, find_rank_of_first
 
 
 DB_FILE = 'wordbank.db'
@@ -23,14 +23,16 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument('-c', '--checkpoint-name', required=True)
 parser.add_argument('-o', '--output-folder', default=None)
-DEFAULT_SENTENCES_PER_WORD = 10
+DEFAULT_SENTENCES_PER_WORD = 'all'
 parser.add_argument('-s', '--sentences-per-word', default=DEFAULT_SENTENCES_PER_WORD)
-DEFAULT_ALTERNATIVE_WORDS = 10
+DEFAULT_ALTERNATIVE_WORDS = 'all'
 parser.add_argument('-w', '--alternative-words', default=DEFAULT_ALTERNATIVE_WORDS)
 DEFAULT_RANDOM_SEED = 33
 parser.add_argument('-r', '--random-seed', default=DEFAULT_RANDOM_SEED)
 parser.add_argument('-d', '--original-dataset', default=None)
 parser.add_argument('--different-category-alternative-words', action='store_true')
+DEFAULT_THRESHOLD = 0.5
+parser.add_argument('-t', '--threshold', default=DEFAULT_THRESHOLD, help='Threshold for criterion func')
 
 
 def scorer_from_transformers_checkpoint(checkpoint_name, contexts, device):
@@ -57,9 +59,9 @@ def main(args):
     results_df = discriminative_task_all_words(
         session_maker=Session, n_sentences_per_word=args.sentences_per_word,
         n_alternative_words=args.alternative_words, model_names=(args.checkpoint_name,),
-        model_scorers=(scorer,), criterion_func=smallest_nll_criterion,
+        model_scorers=(scorer,), criterion_func=find_rank_of_first,
         random_seed=args.random_seed, same_category_words=not args.different_category_alternative_words,
-        original_dataset=args.original_dataset)
+        original_dataset=args.original_dataset, criterion_func_kwargs=dict(threshold=args.threshold))
 
     name = args.checkpoint_name.replace('/', '_')
     if args.output_folder is None:
