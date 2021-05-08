@@ -74,7 +74,7 @@ def discriminative_task_single_word(
     else:
         word_query = word_query.filter(WordbankWord.category != target_wordbank_word.category)
 
-    if words_per_sentence == -1 or words_per_sentence == 'all':
+    if n_alternative_words == -1 or n_alternative_words == 'all':
         if not same_category_words:
             raise ValueError(f'Running on all words is only supported when running with same category words')
 
