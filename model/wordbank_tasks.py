@@ -26,6 +26,9 @@ def find_rank_of_first(scores, threshold=0.5):
     temp = np.argsort(scores)
     ranks = np.empty_like(temp)
     ranks[temp] = np.arange(n)
+    if len(scores) == 0 or len(temp) == 0 or len(rank) == 0:
+        print(scores, n, temp, ranks)
+        return
     r = n - 1 - ranks[0]
     p = (r + 1) / n
     return dict(rank=r, percentile=p, result=p < threshold)
@@ -110,16 +113,17 @@ def discriminative_task_single_word(
     for s, (sentence_id, sentence_text) in enumerate(zip(sentence_ids, sentences)):
         sentence_scores = sentence_scores[s * n_alternative_words:(s + 1) * n_alternative_words]
         criterion_dict = criterion_func(sentence_scores, **criterion_func_kwargs)
-        sentence_dict = dict(
-            sentence_id=sentence_id, 
-            sentence_text=sentence_text, 
-            compared_word_ids=word_ids_per_sentence[s],
-            compared_words=words_per_sentence[s],
-            sentence_scores=sentence_scores,
-            
-        )
-        sentence_dict.update(criterion_dict)
-        all_results.append(sentence_dict)
+        if criterion_dict:
+            sentence_dict = dict(
+                sentence_id=sentence_id, 
+                sentence_text=sentence_text, 
+                compared_word_ids=word_ids_per_sentence[s],
+                compared_words=words_per_sentence[s],
+                sentence_scores=sentence_scores,
+                
+            )
+            sentence_dict.update(criterion_dict)
+            all_results.append(sentence_dict)
 
     return all_results
 
