@@ -83,6 +83,8 @@ def discriminative_task_single_word(
         word_ids_per_sentence = [word_ids.copy() for _ in range(len(sentences))]
         words = list(words)
         words_per_sentence = [words.copy() for _ in range(len(sentences))]
+        n_alternative_words = len(words)
+    
     else:
         ids_and_words_per_sentence = select_k_random_n_times(word_query.all(), n_alternative_words, n_sentences_per_word)
         word_ids_per_sentence, words_per_sentence = list(zip(*[list(zip(*x)) for x in ids_and_words_per_sentence]))
