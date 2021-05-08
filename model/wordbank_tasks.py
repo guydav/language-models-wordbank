@@ -23,7 +23,7 @@ def smallest_nll_criterion(scores):
 
 def find_rank_of_first(scores, threshold=0.5):
     n = len(scores)
-    temp = scores.argsort()
+    temp = np.argsort(scores)
     ranks = np.empty_like(temp)
     ranks[temp] = np.arange(n)
     r = n - 1 - ranks[0]
