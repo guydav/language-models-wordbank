@@ -58,8 +58,8 @@ def main(args):
 
     results_df = discriminative_task_all_words(
         session_maker=Session, n_sentences_per_word=args.sentences_per_word,
-        n_alternative_words=args.alternative_words, model_names=(args.checkpoint_name,),
-        model_scorers=(scorer,), criterion_func=find_rank_of_first,
+        n_alternative_words=args.alternative_words, model_name=args.checkpoint_name,
+        scorer=scorer, criterion_func=find_rank_of_first,
         random_seed=args.random_seed, same_category_words=not args.different_category_alternative_words,
         original_dataset=args.original_dataset, criterion_func_kwargs=dict(threshold=args.threshold))
 

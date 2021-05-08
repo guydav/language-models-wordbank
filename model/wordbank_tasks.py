@@ -34,8 +34,8 @@ def find_rank_of_first(scores, threshold=0.5):
 def discriminative_task_single_word(
     session_maker, target_wordbank_word, 
     n_sentences_per_word, n_alternative_words, 
-    model_names, model_scorers, criterion_func, 
-    random_seed=33, same_category_words=True,
+    scorer, criterion_func, 
+    batch_size=256, random_seed=33, same_category_words=True,
     original_dataset=None, criterion_func_kwargs=None):
 
     np.random.seed(random_seed)
@@ -92,34 +92,39 @@ def discriminative_task_single_word(
 
     [word_ids.insert(0, target_wordbank_word.id) for word_ids in word_ids_per_sentence]
     [words.insert(0, target_wordbank_word.word) for words in words_per_sentence]
-    sentence_copies = [s.replace(target_wordbank_word.word, w, 1) 
-                        for s, words in zip(sentences, words_per_sentence)
-                        for w in words]
-    model_sentence_scores = [scorer.score_sentences(sentence_copies) for scorer in model_scorers]
+
+    sentence_copies = [[s.replace(target_wordbank_word.word, w, 1) for w in words]
+                        for s, words in zip(sentences, words_per_sentence)]
+
+    n_sentences_per_batch = batch_size // n_alternative_words
+    sentence_scores = []
+    for batch_idx in range(int(np.ceil(n_sentences_per_word) / n_sentences_per_batch)):
+        batch_sentence_copies = sentence_copies[batch_idx * n_sentences_per_batch:min(n_sentences_per_word, (batch_idx + 1) * n_sentences_per_batch)]
+        batch = [item for sublist in batch_sentence_copies for item in sublist]
+        sentence_scores.extend(scorer.score_sentences(batch))
+
     all_results = []
 
-    for model_name, model_raw_scores in zip(model_names, model_sentence_scores):
-        for s, (sentence_id, sentence_text) in enumerate(ids_and_sentences):
-            sentence_scores = model_raw_scores[s * n_alternative_words:(s + 1) * n_alternative_words]
-            criterion_dict = criterion_func(sentence_scores, **criterion_func_kwargs)
-            sentence_dict = dict(
-                model_name=model_name, 
-                sentence_id=sentence_id, 
-                sentence_text=sentence_text, 
-                compared_word_ids=word_ids_per_sentence[s],
-                compared_words=words_per_sentence[s],
-                sentence_scores=sentence_scores,
-                
-            )
-            sentence_dict.update(criterion_dict)
-            all_results.append(sentence_dict)
+    for s, (sentence_id, sentence_text) in enumerate(zip(sentence_ids, sentences)):
+        sentence_scores = sentence_scores[s * n_alternative_words:(s + 1) * n_alternative_words]
+        criterion_dict = criterion_func(sentence_scores, **criterion_func_kwargs)
+        sentence_dict = dict(
+            sentence_id=sentence_id, 
+            sentence_text=sentence_text, 
+            compared_word_ids=word_ids_per_sentence[s],
+            compared_words=words_per_sentence[s],
+            sentence_scores=sentence_scores,
+            
+        )
+        sentence_dict.update(criterion_dict)
+        all_results.append(sentence_dict)
 
     return all_results
 
 
 def discriminative_task_all_words(session_maker, 
     n_sentences_per_word, n_alternative_words, 
-    model_names, model_scorers, criterion_func, 
+    model_name, scorer, criterion_func, 
     random_seed=33, same_category_words=True,
     original_dataset=None, criterion_func_kwargs=None):
 
@@ -142,11 +147,12 @@ def discriminative_task_all_words(session_maker,
         target_word_results = discriminative_task_single_word(
             session_maker=session_maker, target_wordbank_word=target_word,
             n_sentences_per_word=n_sentences_per_word, n_alternative_words=n_alternative_words, 
-            model_names=model_names, model_scorers=model_scorers, criterion_func=criterion_func, 
+            scorer=scorer, criterion_func=criterion_func, 
             random_seed=random_seed, same_category_words=same_category_words, 
             original_dataset=original_dataset, criterion_func_kwargs=criterion_func_kwargs)
 
         for result in target_word_results:
+            result['model_name'] = model_name
             result['word_id'] = target_word.id
             result['word'] = target_word.word
 
