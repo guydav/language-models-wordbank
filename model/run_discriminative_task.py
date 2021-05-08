@@ -56,6 +56,12 @@ def main(args):
     
     warnings.filterwarnings('ignore', category=UserWarning, module='gluonnlp.data')
 
+    if args.sentences_per_word != 'all':
+        args.sentences_per_word = int(args.sentences_per_word)
+
+    if args.alternative_words != 'all':
+        args.alternative_words = int(args.alternative_words)
+
     results_df = discriminative_task_all_words(
         session_maker=Session, n_sentences_per_word=args.sentences_per_word,
         n_alternative_words=args.alternative_words, model_name=args.checkpoint_name,
