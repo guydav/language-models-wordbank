@@ -26,9 +26,9 @@ def find_rank_of_first(scores, threshold=0.5):
     temp = np.argsort(scores)
     ranks = np.empty_like(temp)
     ranks[temp] = np.arange(n)
-    if len(scores) == 0 or len(temp) == 0 or len(rank) == 0:
-        print(scores, n, temp, ranks)
-        return
+    # if len(scores) == 0 or len(temp) == 0 or len(ranks) == 0:
+    #     print(scores, n, temp, ranks)
+    #     return
     r = n - 1 - ranks[0]
     p = (r + 1) / n
     return dict(rank=r, percentile=p, result=p < threshold)
@@ -98,22 +98,21 @@ def discriminative_task_single_word(
     [word_ids.insert(0, target_wordbank_word.id) for word_ids in word_ids_per_sentence]
     [words.insert(0, target_wordbank_word.word) for words in words_per_sentence]
 
-    sentence_copies = [[s.replace(target_wordbank_word.word, w, 1) for w in words]
+    sentence_copies = [s.replace(target_wordbank_word.word, w, 1) 
+                        for w in words
                         for s, words in zip(sentences, words_per_sentence)]
 
-    n_sentences_per_batch = batch_size // n_alternative_words
     sentence_scores = []
-    for batch_idx in range(int(np.ceil(n_sentences_per_word) / n_sentences_per_batch)):
-        batch_sentence_copies = sentence_copies[batch_idx * n_sentences_per_batch:min(n_sentences_per_word, (batch_idx + 1) * n_sentences_per_batch)]
-        batch = [item for sublist in batch_sentence_copies for item in sublist]
+    for batch_idx in range(int(np.ceil(sentence_copies) / batch_size)):
+        batch = sentence_copies[batch_idx * batch_size:min(len(sentence_copies), (batch_idx + 1) * batch_size)]
         sentence_scores.extend(scorer.score_sentences(batch))
 
     all_results = []
 
     for s, (sentence_id, sentence_text) in enumerate(zip(sentence_ids, sentences)):
         current_scores = sentence_scores[s * n_alternative_words:(s + 1) * n_alternative_words]
-        if not current_scores:
-            print(s, sentence_id, sentence_text, current_scores)
+        # if not current_scores:
+        #     print(s, sentence_id, sentence_text, current_scores)
         criterion_dict = criterion_func(current_scores, **criterion_func_kwargs)
         if criterion_dict:
             sentence_dict = dict(
