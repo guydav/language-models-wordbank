@@ -81,12 +81,12 @@ def discriminative_task_single_word(
         if not same_category_words:
             raise ValueError(f'Running on all words is only supported when running with same category words')
 
-        word_ids, words = zip(*word_query.all())
+        word_ids, all_words = zip(*word_query.all())
         word_ids = list(word_ids)
         word_ids_per_sentence = [word_ids.copy() for _ in range(len(sentences))]
-        words = list(words)
-        words_per_sentence = [words.copy() for _ in range(len(sentences))]
-        n_alternative_words = len(words)
+        all_words = list(all_words)
+        words_per_sentence = [all_words.copy() for _ in range(len(sentences))]
+        n_alternative_words = len(all_words)
     
     else:
         ids_and_words_per_sentence = select_k_random_n_times(word_query.all(), n_alternative_words, n_sentences_per_word)
@@ -99,8 +99,9 @@ def discriminative_task_single_word(
     [words.insert(0, target_wordbank_word.word) for words in words_per_sentence]
 
     sentence_copies = [s.replace(target_wordbank_word.word, w, 1) 
+                        for s, words in zip(sentences, words_per_sentence)
                         for w in words
-                        for s, words in zip(sentences, words_per_sentence)]
+                        ]
 
     sentence_scores = []
     for batch_idx in range(int(np.ceil(len(sentence_copies) / batch_size))):
