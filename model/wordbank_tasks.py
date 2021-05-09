@@ -103,7 +103,7 @@ def discriminative_task_single_word(
                         for s, words in zip(sentences, words_per_sentence)]
 
     sentence_scores = []
-    for batch_idx in range(int(np.ceil(sentence_copies) / batch_size)):
+    for batch_idx in range(int(np.ceil(len(sentence_copies) / batch_size))):
         batch = sentence_copies[batch_idx * batch_size:min(len(sentence_copies), (batch_idx + 1) * batch_size)]
         sentence_scores.extend(scorer.score_sentences(batch))
 
