@@ -38,7 +38,7 @@ def discriminative_task_single_word(
     session_maker, target_wordbank_word, 
     n_sentences_per_word, n_alternative_words, 
     scorer, criterion_func, 
-    batch_size=256, random_seed=33, same_category_words=True,
+    batch_size=1024, random_seed=33, same_category_words=True,
     original_dataset=None, criterion_func_kwargs=None):
 
     np.random.seed(random_seed)
@@ -111,8 +111,10 @@ def discriminative_task_single_word(
     all_results = []
 
     for s, (sentence_id, sentence_text) in enumerate(zip(sentence_ids, sentences)):
-        sentence_scores = sentence_scores[s * n_alternative_words:(s + 1) * n_alternative_words]
-        criterion_dict = criterion_func(sentence_scores, **criterion_func_kwargs)
+        current_scores = sentence_scores[s * n_alternative_words:(s + 1) * n_alternative_words]
+        if not current_scores:
+            print(s, sentence_id, sentence_text, current_scores)
+        criterion_dict = criterion_func(current_scores, **criterion_func_kwargs)
         if criterion_dict:
             sentence_dict = dict(
                 sentence_id=sentence_id, 
@@ -131,7 +133,7 @@ def discriminative_task_single_word(
 def discriminative_task_all_words(session_maker, 
     n_sentences_per_word, n_alternative_words, 
     model_name, scorer, criterion_func, 
-    random_seed=33, same_category_words=True,
+    random_seed=33, same_category_words=True, batch_size=1024,
     original_dataset=None, criterion_func_kwargs=None):
 
     np.random.seed(random_seed)
@@ -153,7 +155,7 @@ def discriminative_task_all_words(session_maker,
         target_word_results = discriminative_task_single_word(
             session_maker=session_maker, target_wordbank_word=target_word,
             n_sentences_per_word=n_sentences_per_word, n_alternative_words=n_alternative_words, 
-            scorer=scorer, criterion_func=criterion_func, 
+            scorer=scorer, criterion_func=criterion_func,  batch_size=batch_size,
             random_seed=random_seed, same_category_words=same_category_words, 
             original_dataset=original_dataset, criterion_func_kwargs=criterion_func_kwargs)
 

@@ -33,6 +33,8 @@ parser.add_argument('-d', '--original-dataset', default=None)
 parser.add_argument('--different-category-alternative-words', action='store_true')
 DEFAULT_THRESHOLD = 0.5
 parser.add_argument('-t', '--threshold', default=DEFAULT_THRESHOLD, help='Threshold for criterion func')
+DEFAULT_BATCH_SIZE = 1024
+parser.add_argument('-b', '--batch-size', default=DEFAULT_BATCH_SIZE, type=int)
 
 
 def scorer_from_transformers_checkpoint(checkpoint_name, contexts, device):
@@ -65,7 +67,7 @@ def main(args):
     results_df = discriminative_task_all_words(
         session_maker=Session, n_sentences_per_word=args.sentences_per_word,
         n_alternative_words=args.alternative_words, model_name=args.checkpoint_name,
-        scorer=scorer, criterion_func=find_rank_of_first,
+        scorer=scorer, criterion_func=find_rank_of_first, batch_size=args.batch_size,
         random_seed=args.random_seed, same_category_words=not args.different_category_alternative_words,
         original_dataset=args.original_dataset, criterion_func_kwargs=dict(threshold=args.threshold))
 
