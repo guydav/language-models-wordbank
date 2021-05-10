@@ -28,7 +28,7 @@ parser.add_argument('-s', '--sentences-per-word', default=DEFAULT_SENTENCES_PER_
 DEFAULT_ALTERNATIVE_WORDS = 'all'
 parser.add_argument('-w', '--alternative-words', default=DEFAULT_ALTERNATIVE_WORDS)
 DEFAULT_RANDOM_SEED = 33
-parser.add_argument('-r', '--random-seed', default=DEFAULT_RANDOM_SEED)
+parser.add_argument('-r', '--random-seed', default=DEFAULT_RANDOM_SEED, type=int)
 parser.add_argument('-d', '--original-dataset', default=None)
 parser.add_argument('--different-category-alternative-words', action='store_true')
 DEFAULT_THRESHOLD = 0.5

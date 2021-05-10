@@ -4,6 +4,7 @@ import pandas as pd
 import tqdm
 import warnings
 from dataset_orm import *
+import torch
 
 
 def select_k_random(items, k):
@@ -77,7 +78,7 @@ def discriminative_task_single_word(
     else:
         word_query = word_query.filter(WordbankWord.category != target_wordbank_word.category)
 
-    if n_alternative_words == -1 or n_alternative_words == 'all':
+    if n_alternative_words == -1 or n_alternative_words == 'all' or word_query.count() <= n_alternative_words:
         if not same_category_words:
             raise ValueError(f'Running on all words is only supported when running with same category words')
 
@@ -98,15 +99,20 @@ def discriminative_task_single_word(
     [word_ids.insert(0, target_wordbank_word.id) for word_ids in word_ids_per_sentence]
     [words.insert(0, target_wordbank_word.word) for words in words_per_sentence]
 
+    # print(len(sentences), len(words_per_sentence), len(words_per_sentence[0]))
+
     sentence_copies = [s.replace(target_wordbank_word.word, w, 1) 
                         for s, words in zip(sentences, words_per_sentence)
                         for w in words
                         ]
+    # print(len(sentence_copies), n_sentences_per_word, n_alternative_words) 
 
     sentence_scores = []
     for batch_idx in range(int(np.ceil(len(sentence_copies) / batch_size))):
         batch = sentence_copies[batch_idx * batch_size:min(len(sentence_copies), (batch_idx + 1) * batch_size)]
         sentence_scores.extend(scorer.score_sentences(batch))
+        torch.cuda.empty_cache()
+    # print(len(sentence_scores))
 
     all_results = []
 
@@ -152,6 +158,7 @@ def discriminative_task_all_words(session_maker,
 
     all_results = []
     for target_word in tqdm.tqdm(words_without_spaces, total=len(words_without_spaces)):
+        # print(target_word)
         target_word_results = discriminative_task_single_word(
             session_maker=session_maker, target_wordbank_word=target_word,
             n_sentences_per_word=n_sentences_per_word, n_alternative_words=n_alternative_words, 
