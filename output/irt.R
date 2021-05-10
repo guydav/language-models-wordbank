@@ -10,6 +10,7 @@ if (length(args) != 4) {
 #}
 
 library(mirt) #make mirt package available
+library(tidyverse)
 
 responses <- read.table(args[1], header = TRUE)
 print("Responses file is read.")
@@ -65,11 +66,13 @@ irt_parameters <- coef(irt_model, IRTpars = TRUE, simplify=TRUE)
 thetas <- fscores(irt_model, full.scores=TRUE)
 scores$theta <- thetas
 
-#scores
+#prepare data to write
+scores <- scores %>% as_tibble()
+irt_parameters <- as.data.frame(irt_parameters) %>% rownames_to_column(var = "word") %>% as_tibble()
 
 #scores.to_tsv(args[4])
 write.table(scores, file=args[4], quote=FALSE, sep='\t', col.names = NA)
 print("Ability parameters file is written.")
 
-write.table(irt_parameters, file=args[3], quote=FALSE, sep='\t', col.names = NA)
+write.table(irt_parameters, file=args[3], quote=FALSE, sep='\t')
 print("Item parameters file is written.")

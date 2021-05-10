@@ -43,9 +43,9 @@ def main(args):
             words = list(df.word.unique())
 
     output_df = pd.DataFrame(results, columns=words)
-    output_df.to_csv(input_folder_path / 'irt_data.tsv', sep='\t')
+    output_df.to_csv(input_folder_path / 'irt_data.tsv', sep='\t', index=False)
     with open(input_folder_path / 'irt_models.txt', 'w') as models_output_file:
-        models_output_file.writelines([f'{i:2d}: {model}\n' for i, model in enumerate(models)])
+        models_output_file.writelines([f'{model}\n' for i, model in enumerate(models)])
         
 
 if __name__ == '__main__':
