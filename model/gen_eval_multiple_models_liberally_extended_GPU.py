@@ -31,8 +31,8 @@ print("\nWordbank: ", wordbank)
 #'this', 'this little piggy', 'yourself', 'yucky', 'yum yum', 'zebra', 'zipper', 'zoo']
 
 #Read childes sentences along with the matches from wordbank
-def read_dataset(dataset_sentences, word_occurences_in_dataset, dataset_file_path):
-    i = 0
+def read_dataset(dataset_sentences, word_occurences_in_dataset, dataset_file_path, no_of_sentences_read_total):
+    i = no_of_sentences_read_total
     with open(dataset_file_path, 'r') as dataset_file:
         #Store in hashmaps? Or any other better methods? The size is small
         #and maynot require a database.
@@ -94,12 +94,13 @@ def generate_predictions_multiple_models(checkpoint_name_list, max_words_to_eval
         sys.exit()
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     
+    no_of_sentences_read_total = 0
     if(datasets in ["childes", "Childes", "both"]):
-        no_lines_read = read_dataset(dataset_sentences, word_occurences_in_dataset, childes_file_path)
-        print("\nFinished reading Childes data from " + str(no_lines_read) + " lines.")
+        no_of_sentences_read_total = read_dataset(dataset_sentences, word_occurences_in_dataset, childes_file_path, no_of_sentences_read_total)
+        print("\nTotal sentences read so far  " + str(no_of_sentences_read_total) + " lines.")
     if(datasets in ["babi", "bAbi", "both"]):
-        no_lines_read = read_dataset(dataset_sentences, word_occurences_in_dataset, bAbi_file_path)
-        print("\nFinished reading bAbi data from " + str(no_lines_read) + " lines.")
+        no_of_sentences_read_total = read_dataset(dataset_sentences, word_occurences_in_dataset, bAbi_file_path, no_of_sentences_read_total)
+        print("\nTotal sentences read so far " + str(no_of_sentences_read_total) + " lines.")
     if(datasets not in ["childes", "Childes", "babi", "bAbi", "both"]):
         print("Options for datasets argument: childes, Childes, babi, bAbi, both")
     
