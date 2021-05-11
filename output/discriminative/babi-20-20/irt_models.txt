@@ -12,3 +12,5 @@ nyu-mll/roberta-base-1B-2
 bert-base-uncased
 distilbert-base-uncased
 nyu-mll/roberta-base-1B-1
+all-ones
+all-zeros

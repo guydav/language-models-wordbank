@@ -17,6 +17,7 @@ DEFAULT_K = 3
 parser.add_argument('-k', default=DEFAULT_K, help='which k to rescore for')
 DEFAULT_RESULT_COL = 'result'
 parser.add_argument('-c', '--result-column', default=DEFAULT_RESULT_COL)
+parser.add_argument('-a', '--add-zero-one-rows', action='store_true', help='Add rows of ones and zeros?')
 
 
 def top_k(df, args):
@@ -63,6 +64,16 @@ def main(args):
         results.append(list(word_scores))
         if words is None:
             words = list(df.word.unique())
+
+    if args.add_zero_one_rows:
+        ones = [1] * len(results[-1])
+        results.append(ones)
+        models.append('all-ones')
+
+        zeros = [0] * len(results[-1])
+        results.append(zeros)
+        models.append('all-zeros')
+        
 
     output_df = pd.DataFrame(results, columns=words)
     output_df.to_csv(input_folder_path / 'irt_data.tsv', sep='\t', index=False)

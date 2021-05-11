@@ -12,3 +12,5 @@ nyu-mll/roberta-base-10M-3
 nyu-mll/roberta-base-1B-3
 nyu-mll/roberta-base-100M-3
 nyu-mll/roberta-med-small-1M-3
+all-ones
+all-zeros
