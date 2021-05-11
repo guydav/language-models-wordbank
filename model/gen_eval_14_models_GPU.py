@@ -8,7 +8,7 @@ from math import ceil
 
 DEBUG = 1
 #Do not repeat this RUN_ID. Every time you run, use a new one. Also, use different ranges so that we don't overlap.
-RUN_ID = "25_GPU_44_models_Childes_all_words"
+RUN_ID = "30_GPU_14_models_babi_all_words"
 
 #Read words from wordbank
 def read_wordbank(wordbank):
@@ -329,7 +329,7 @@ checkpoint_names = [checkpoint_name_4, checkpoint_name_4_2, checkpoint_name_4_3,
                     checkpoint_name_5, \
                     checkpoint_name_6]
 
-datasets_to_be_read = "childes"#options: "childes" or "Childes", "bAbi" or "babi", "both"
+datasets_to_be_read = "babi"#options: "childes" or "Childes", "bAbi" or "babi", "both"
 generate_predictions_multiple_models(checkpoint_names, max_words_to_evaluate = 11000, 
                                      scoring="top_k", k = 20, no_of_sentences_per_word = 10,
                                      min_prob = 0.1, cutoff = 0.5, datasets = datasets_to_be_read)
