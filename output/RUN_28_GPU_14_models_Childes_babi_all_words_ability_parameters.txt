@@ -1,0 +1,17 @@
+	theta	name
+1	-3.21712826273629	nyu-mll/roberta-med-small-1M-1
+2	-2.78182956985752	nyu-mll/roberta-med-small-1M-2
+3	-3.00000039476446	nyu-mll/roberta-med-small-1M-3
+4	-1.00000000025998	nyu-mll/roberta-base-10M-1
+5	-0.798632350754197	nyu-mll/roberta-base-10M-2
+6	-1.20640745181068	nyu-mll/roberta-base-10M-3
+7	0.0413718439976235	nyu-mll/roberta-base-100M-1
+8	0.199882219132557	nyu-mll/roberta-base-100M-2
+9	0.40475735382126	nyu-mll/roberta-base-100M-3
+10	1.19999999999998	nyu-mll/roberta-base-1B-1
+11	0.799999987444293	nyu-mll/roberta-base-1B-2
+12	0.999999999999988	nyu-mll/roberta-base-1B-3
+13	1.19999999999998	bert-base-uncased
+14	1.59999961661425	distilbert-base-uncased
+15	5.10232271841503	all-1
+16	-4.86055987887217	all-0
