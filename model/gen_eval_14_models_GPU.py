@@ -322,128 +322,12 @@ checkpoint_name_4_3 = "nyu-mll/roberta-med-small-1M-3"
 checkpoint_name_5 = 'bert-base-uncased'#420MB
 checkpoint_name_6 = 'distilbert-base-uncased'
 
-checkpoint_name_7 = 'bert-base-multilingual-cased'
-checkpoint_name_8 = 'albert-base-v2'#45MB
-checkpoint_name_9 = 'bert-base-multilingual-uncased'#641MB
-checkpoint_name_10 = 'distilbert-base-multilingual-cased'#517MB
-
-#vinai models seem like character models?? Output: ['a n t', 'a n t s', 'a c t u a l' ....]
-#These are all very small models of size ~1MB
-checkpoint_name_11 = 'vinai/phobert-base'
-checkpoint_name_11_2 = 'vinai/phobert-large'
-checkpoint_name_12 = 'vinai/bertweet-base'
-checkpoint_name_12_2 ='vinai/bertweet-covid19-base-cased'
-checkpoint_name_12_3 ='vinai/bertweet-covid19-base-uncased'
-
-#https://huggingface.co/transformers/converting_tensorflow_models.html#xlm
-#checkpoint_name_13 = 'jplu/tf-xlm-roberta-base'
-#checkpoint_name_13_2 = 'jplu/tf-xlm-roberta-large'
-#https://huggingface.co/jplu/tf-xlm-r-ner-40-lang not a masked LM?
-
-#Some weights of the model checkpoint at beomi/kcbert-base-dev were not used when initializing BertForMaskedLM
-#BAD PERFORMANCE
-#checkpoint_name_14 = 'beomi/kcbert-base'
-#checkpoint_name_14_2 = 'beomi/kcbert-large'
-#checkpoint_name_14_3 = 'beomi/kcbert-base-dev'
-#checkpoint_name_14_4 = 'beomi/kcbert-large-dev'
-#https://huggingface.co/beomi/KcELECTRA-base not a masked LM?
-
-#Multi-lingual models listed at https://huggingface.co/transformers/multilingual.html
-#These require language embeddings.
-checkpoint_name_15 = 'xlm-mlm-ende-1024'#796MB
-checkpoint_name_15_2 = 'xlm-mlm-enfr-1024'#792MB
-checkpoint_name_15_3 = 'xlm-mlm-enro-1024'#795MB
-#checkpoint_name_15_4 = 'xlm-mlm-xnli15-1024'#Gives weird predictions
-#Gives weird predictions ['?~Aت', 'ums', 'pan', 'und', 'seien', '...', 'sei', '·', 'einen', 'pet', 
-#'sum', 'ا?~Dصد', 'and', 'was', 'werde', '?~O?~B', 'cv', 'maan', '"', 'sowie']
-#checkpoint_name_15_5 = 'xlm-mlm-tlm-xnli15-1024' #MLM + Translation?
-#These don't require language embeddings
-checkpoint_name_15_6 = 'xlm-mlm-17-1280'#1.1GB
-checkpoint_name_15_7 = 'xlm-mlm-100-1280'#1.1GB
-#MLM or CLM?
-#xlm-clm-ende-1024
-#2.5GB
-#checkpoint_name_15_9 = 'xlm-mlm-en-2048'
-
-#bert-base-multilingual-uncased
-#bert-base-multilingual-cased
-#xlm-roberta-base
-#xlm-roberta-large
-
-checkpoint_name_16 = 'bert-base-cased'#416MB
-checkpoint_name_17 = 'bert-large-uncased'#1.3GB
-checkpoint_name_17_2 = 'bert-large-cased'#1.2GB
-checkpoint_name_18 = 'distilroberta-base'#316MB
-#Has two other models. Check. Raised the error about config.json
-#checkpoint_name_19 = 'TOD-BERT-JNT-V1'#420MB
-checkpoint_name_20 = 'bert-large-uncased-whole-word-masking'#1.3GB
-checkpoint_name_20_2 = 'bert-large-cased-whole-word-masking'#1.2GB
-#800MB+
-checkpoint_name_21 = 'albert-xxlarge-v2'#851MB
-checkpoint_name_22 = 'sshleifer/tiny-distilroberta-base'#603KB
-#https://github.com/google-research/albert
-checkpoint_name_23 = 'albert-large-v1'#68MB
-checkpoint_name_23_2 = 'albert-large-v2'#68MB
-checkpoint_name_23_3 = 'albert-base-v1'#45MB
-checkpoint_name_23_4 = 'albert-base-v2'#45MB
-checkpoint_name_23_5 = 'albert-xlarge-v2'#225MB
-
-checkpoint_name_24 = 'johngiorgi/declutr-sci-base'#421MB
-checkpoint_name_25 = 'bert-base-cased-finetuned-mrpc'#413MB
-#microsoft
-#OSError: Can't load config for 'microsoft/mpnet-base'
-#checkpoint_name_26 = 'microsoft/mpnet-base'
-#checkpoint_name_26_??? = 'microsoft/graphcodebert-base'
-
-#google
-checkpoint_name_27 = 'google/electra-small-generator'#52MB
-
-#OSError: Can't load weights for 'cardiffnlp/twitter-roberta-base'.
-#checkpoint_name_28 = 'cardiffnlp/twitter-roberta-base'#478MB
-
-
-#checkpoint_names = [checkpoint_name_4, checkpoint_name_4_2, checkpoint_name_4_3, \
-#                    checkpoint_name_3, checkpoint_name_3_2, checkpoint_name_3_3, \
-#                    checkpoint_name_2, checkpoint_name_2_2, checkpoint_name_2_3, \
-#                    checkpoint_name_1, checkpoint_name_1_2, checkpoint_name_1_3, \
-#                    checkpoint_name_5, \
-#                    checkpoint_name_6, \
-#                    checkpoint_name_7, \
-#                    checkpoint_name_8, \
-#                    checkpoint_name_9, \
-#                    checkpoint_name_10, \
-#                    #checkpoint_name_11, checkpoint_name_11_2, checkpoint_name_12, checkpoint_name_12_2, checkpoint_name_12_3, \
-#                    #checkpoint_name_13, checkpoint_name_13_2, \
-#                    checkpoint_name_14, checkpoint_name_14_2, checkpoint_name_14_3, checkpoint_name_14_4, \
-#                    checkpoint_name_15, checkpoint_name_15_2, checkpoint_name_15_3, checkpoint_name_15_4, checkpoint_name_15_5, \
-#                    checkpoint_name_15_6, checkpoint_name_15_7 \
-#                    ]
-
 checkpoint_names = [checkpoint_name_4, checkpoint_name_4_2, checkpoint_name_4_3, \
                     checkpoint_name_3, checkpoint_name_3_2, checkpoint_name_3_3, \
                     checkpoint_name_2, checkpoint_name_2_2, checkpoint_name_2_3, \
                     checkpoint_name_1, checkpoint_name_1_2, checkpoint_name_1_3, \
                     checkpoint_name_5, \
-                    checkpoint_name_6, \
-                    checkpoint_name_7, \
-                    checkpoint_name_8, \
-                    checkpoint_name_9, \
-                    checkpoint_name_10, \
-                    checkpoint_name_11, checkpoint_name_11_2, checkpoint_name_12, checkpoint_name_12_2, checkpoint_name_12_3, \
-                    checkpoint_name_15, checkpoint_name_15_2, checkpoint_name_15_3, \
-                    checkpoint_name_15_6, checkpoint_name_15_7, \
-                    checkpoint_name_16, \
-                    checkpoint_name_17, checkpoint_name_17_2, \
-                    checkpoint_name_18, \
-                    checkpoint_name_20, checkpoint_name_20_2, \
-                    checkpoint_name_21, \
-                    checkpoint_name_22, \
-                    checkpoint_name_23, checkpoint_name_23_2, checkpoint_name_23_3, checkpoint_name_23_4, checkpoint_name_23_5, \
-                    checkpoint_name_24, \
-                    checkpoint_name_25, \
-                    checkpoint_name_27
-                    ]
-
+                    checkpoint_name_6]
 
 datasets_to_be_read = "childes"#options: "childes" or "Childes", "bAbi" or "babi", "both"
 generate_predictions_multiple_models(checkpoint_names, max_words_to_evaluate = 11000, 

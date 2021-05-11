@@ -278,12 +278,11 @@ checkpoint_name_5 = 'bert-base-uncased'
 
 checkpoint_name_6 = 'distilbert-base-uncased'
 
-#checkpoint_names = [checkpoint_name_1, checkpoint_name_2, checkpoint_name_3, checkpoint_name_4, checkpoint_name_5]
 checkpoint_names = [checkpoint_name_4, checkpoint_name_4_2, checkpoint_name_4_3, \
-                    #checkpoint_name_3, checkpoint_name_3_2, checkpoint_name_3_3, \
-                    #checkpoint_name_2, checkpoint_name_2_2, checkpoint_name_2_3, \
-                    #checkpoint_name_1, checkpoint_name_1_2, checkpoint_name_1_3, \
-                    #checkpoint_name_5, \
+                    checkpoint_name_3, checkpoint_name_3_2, checkpoint_name_3_3, \
+                    checkpoint_name_2, checkpoint_name_2_2, checkpoint_name_2_3, \
+                    checkpoint_name_1, checkpoint_name_1_2, checkpoint_name_1_3, \
+                    checkpoint_name_5, \
                     checkpoint_name_6]
 
 generate_predictions_multiple_models(checkpoint_names, 10, scoring="top_k", min_prob = 0.1, cutoff = 0.5)
