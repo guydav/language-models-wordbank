@@ -3,6 +3,7 @@ import pathlib
 import glob
 import numpy as np
 import pandas as pd
+import tqdm
 from collections import defaultdict
 
 
@@ -35,18 +36,17 @@ def model_name_from_file_name(name):
 def main(args):
     input_folder_path = pathlib.Path(args.input_folder)
     input_paths = glob.glob(str((input_folder_path / '*.csv').absolute()))
-    input_file_names = [pathlib.Path(p).name for p in input_paths]
+    input_file_names_and_paths = [(pathlib.Path(p).name, p) for p in input_paths]
 
     models_to_paths = defaultdict(list)
     results = []
     models = []
     words = None
 
-    for name in input_file_names:
-        models_to_paths[model_name_from_file_name(name)].append(name)
+    for name, path in input_file_names_and_paths:
+        models_to_paths[model_name_from_file_name(name)].append(path)
 
-
-    for model_name in models_to_paths:
+    for model_name in tqdm.tqdm(models_to_paths):
         models.append(model_name)
         df = None
         for input_file in models_to_paths[model_name]:
@@ -55,12 +55,12 @@ def main(args):
             else:
                 df = df.append(pd.read_csv(input_file))
         
-            if args.rescore_function is not None:
-                word_scores = globals()[args.rescore_function](df, args)
-            else:
-                word_scores = aggregate_by_word_and_sentence(df, args)
-                
-            results.append(list(word_scores))
+        if args.rescore_function is not None:
+            word_scores = globals()[args.rescore_function](df, args)
+        else:
+            word_scores = aggregate_by_word_and_sentence(df, args)
+
+        results.append(list(word_scores))
         if words is None:
             words = list(df.word.unique())
 
