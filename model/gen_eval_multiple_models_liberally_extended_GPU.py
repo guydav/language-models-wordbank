@@ -8,7 +8,7 @@ from math import ceil
 
 DEBUG = 1
 #Do not repeat this RUN_ID. Every time you run, use a new one. Also, use different ranges so that we don't overlap.
-RUN_ID = "26_GPU_44_models_all_childes_bAbi_words"
+RUN_ID = "25_GPU_44_models_Childes_all_words"
 
 #Read words from wordbank
 def read_wordbank(wordbank):
@@ -31,8 +31,8 @@ print("\nWordbank: ", wordbank)
 #'this', 'this little piggy', 'yourself', 'yucky', 'yum yum', 'zebra', 'zipper', 'zoo']
 
 #Read childes sentences along with the matches from wordbank
-def read_dataset(dataset_sentences, word_occurences_in_dataset, dataset_file_path):
-    i = 0
+def read_dataset(dataset_sentences, word_occurences_in_dataset, dataset_file_path, no_of_sentences_read_total):
+    i = no_of_sentences_read_total
     with open(dataset_file_path, 'r') as dataset_file:
         #Store in hashmaps? Or any other better methods? The size is small
         #and maynot require a database.
@@ -94,12 +94,13 @@ def generate_predictions_multiple_models(checkpoint_name_list, max_words_to_eval
         sys.exit()
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     
+    no_of_sentences_read_total = 0
     if(datasets in ["childes", "Childes", "both"]):
-        no_lines_read = read_dataset(dataset_sentences, word_occurences_in_dataset, childes_file_path)
-        print("\nFinished reading Childes data from " + str(no_lines_read) + " lines.")
+        no_of_sentences_read_total = read_dataset(dataset_sentences, word_occurences_in_dataset, childes_file_path, no_of_sentences_read_total)
+        print("\nTotal sentences read so far  " + str(no_of_sentences_read_total) + " lines.")
     if(datasets in ["babi", "bAbi", "both"]):
-        no_lines_read = read_dataset(dataset_sentences, word_occurences_in_dataset, bAbi_file_path)
-        print("\nFinished reading bAbi data from " + str(no_lines_read) + " lines.")
+        no_of_sentences_read_total = read_dataset(dataset_sentences, word_occurences_in_dataset, bAbi_file_path, no_of_sentences_read_total)
+        print("\nTotal sentences read so far " + str(no_of_sentences_read_total) + " lines.")
     if(datasets not in ["childes", "Childes", "babi", "bAbi", "both"]):
         print("Options for datasets argument: childes, Childes, babi, bAbi, both")
     
@@ -402,7 +403,6 @@ checkpoint_name_27 = 'google/electra-small-generator'#52MB
 #checkpoint_name_28 = 'cardiffnlp/twitter-roberta-base'#478MB
 
 
-#checkpoint_names = [checkpoint_name_1, checkpoint_name_2, checkpoint_name_3, checkpoint_name_4, checkpoint_name_5]
 #checkpoint_names = [checkpoint_name_4, checkpoint_name_4_2, checkpoint_name_4_3, \
 #                    checkpoint_name_3, checkpoint_name_3_2, checkpoint_name_3_3, \
 #                    checkpoint_name_2, checkpoint_name_2_2, checkpoint_name_2_3, \
@@ -446,7 +446,7 @@ checkpoint_names = [checkpoint_name_4, checkpoint_name_4_2, checkpoint_name_4_3,
                     ]
 
 
-datasets_to_be_read = "both"#options: "childes" or "Childes", "bAbi" or "babi", "both"
+datasets_to_be_read = "childes"#options: "childes" or "Childes", "bAbi" or "babi", "both"
 generate_predictions_multiple_models(checkpoint_names, max_words_to_evaluate = 11000, 
                                      scoring="top_k", k = 20, no_of_sentences_per_word = 10,
                                      min_prob = 0.1, cutoff = 0.5, datasets = datasets_to_be_read)
