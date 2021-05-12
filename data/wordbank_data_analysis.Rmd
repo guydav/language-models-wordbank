@@ -1,0 +1,919 @@
+---
+title: "R Notebook"
+output:
+  pdf_document: default
+  html_notebook: default
+---
+
+This notebook is for recreating the relevant plots from wordbank:
+Source: https://wordbank-book.stanford.edu/psychometrics.html
+Code adapted from: https://github.com/langcog/wordbank-book
+
+```{r}
+library(tidyverse)
+#install.packages("wordbankr")
+library(wordbankr)
+library(ggstance)
+```
+
+Load items from wordbank
+
+```{r}
+items <- get_item_data(language = "English (American)", form = "WS")
+```
+
+Load data from psychometrics
+
+```{r}
+base::load("~/GitHub_C/wordbank-book/data/psychometrics/eng_ws_raw_data.Rds")
+
+d_ws <- eng_ws %>%
+  mutate(produces = value == "produces") %>%
+  filter(!is.na(category)) %>%
+  select(data_id, produces, age, production, sex, definition) 
+
+base::load("~/GitHub_C/wordbank-book/data/psychometrics/eng_ws_mods_2pl.Rds")
+
+d_ws_summary <- d_ws %>%
+  group_by(data_id, sex, age) %>%
+  summarise(production = production[1]) %>%
+  right_join(fscores_2pl %>%
+               mutate(data_id = as.numeric(data_id))) %>%
+  filter(!is.na(sex))
+```
+
+
+Figure 4.5: Item characteristic curves for a set of individual items from the English WS sample.
+
+```{r}
+thetas <- seq(-6,6,.1)
+irt4pl <- function(a, d, g, u, theta = seq(-6,6,.1)) {
+  p = g + (u - g) * boot::inv.logit(a * (theta + d))
+  return(p)
+}
+irt2pl <- function(a, d, theta = seq(-6,6,.1)) {
+  p = boot::inv.logit(a * (theta + d))
+  return(p)
+}
+
+examples <- c("table","mommy*","trash","yesterday")
+iccs <- coefs_2pl %>%
+  filter(definition %in% examples) %>%
+  split(.$definition) %>%
+  map_df(function(d) {
+    return(data_frame(definition = d$definition,
+                      theta = thetas, 
+                      p = irt2pl(d$a1, d$d, thetas)))
+  })
+
+ggplot(iccs,  
+       aes(x = theta, y = p)) + 
+  geom_line() + 
+  facet_wrap(~definition) + 
+  xlab("Ability") + 
+  ylab("Probability of production")
+```
+
+Figure 4.6: Words (points), plotted by their difficulty and discrimination parameters, as recovered by the 2-parameter IRT model (see text). Outliers are labeled.
+
+```{r, message = FALSE, warning = FALSE}
+ggplot(coefs_2pl,  
+       aes(x = a1, y = -d)) + 
+  geom_point(alpha = .3) + 
+  ggrepel::geom_text_repel(data = filter(coefs_2pl, 
+                                -d < -3.8 | -d > 5.3 | a1 > 4 | a1 < 1), 
+                  aes(label = definition), size = 3) + 
+  xlab("Discrimination") + 
+  ylab("Difficulty")
+```
+
+Figure 4.7: Words (points), plotted now by their lower and upper bound parameters from the 4-parameter IRT model.
+
+
+```{r, message = FALSE, warning = FALSE}
+base::load("~/GitHub_C/wordbank-book/data/psychometrics/eng_ws_mods_4pl.Rds")
+
+ggplot(coefs_4pl, aes(x = g, y = u)) + 
+  geom_point(alpha = .3) + 
+  ggrepel::geom_text_repel(data = filter(coefs_4pl, 
+                                abs(g) > .4 | u < .75), 
+                  aes(label = definition), size = 3) + 
+  xlab("Lower bound (high base rate)") + 
+  ylab("Upper bound (not known by many)")
+```
+
+Figure 4.8: Histograms of words’ difficulty and discrimination parameters, for comprehension and production.
+
+```{r, message = FALSE, warning = FALSE}
+library(cowplot)
+base::load("~/GitHub_C/wordbank-book/data/psychometrics/eng_wg_mods_2pl.Rds")
+
+coefs_2pl_wg <- bind_rows(coefs_2pl_wg_produces %>%
+                            mutate(measure = "Produces"),
+                          coefs_2pl_wg_understands %>%
+                            mutate(measure = "Understands"))
+
+wg_comp_prod <- 
+  coefs_2pl_wg %>%
+  select(a1, d, measure) %>%
+  gather(parameter, value, a1, d) %>%
+  mutate(parameter = fct_recode(parameter, 
+                                Discrimination = "a1", 
+                                Difficulty = "d") %>%
+           relevel("Difficulty"),
+         measure = fct_relevel(measure, "Understands"))
+
+ggplot(wg_comp_prod, 
+       aes(x = value)) +
+  geom_histogram(binwidth = .5) + 
+  facet_grid(measure ~ parameter) + 
+  # xlim(-5,5) + 
+  xlab("Parameter value") + 
+  ylab("Number of words") 
+
+
+wg_comp_prod_summary <- wg_comp_prod %>%
+  group_by(measure, parameter) %>%
+  summarise(value = mean(value))
+```
+
+4.3.3 Lexical category effects on item performance
+
+```{r, message = FALSE, warning = FALSE}
+coefs_2pl <- 
+  coefs_2pl %>%
+  left_join(
+    items %>% 
+    filter(language == "English (American)", form == "WS")
+  ) %>%
+  mutate(
+    lexical_class_label = 
+      lexical_class %>% factor() %>% fct_relabel(~.x %>% as.character())
+  )
+
+class_summary <- coefs_2pl %>%
+  group_by(lexical_class, lexical_class_label) %>%
+  summarise(sd_a1 = sd(a1, na.rm=TRUE), 
+            a1 = mean(a1))
+
+a <- ggplot(coefs_2pl, 
+       aes(x = a1, y = -d, col = lexical_class_label)) + 
+  geom_point(alpha = .3) + 
+  ggrepel::geom_text_repel(data = filter(coefs_2pl, 
+                                a1 < 1 | a1 > 3.8 | -d > 5 | -d < -2.5), 
+                  aes(label = definition), size = 2,
+                  show.legend = FALSE) + 
+  scale_colour_discrete(name = "Lexical class") + 
+  xlab("Discrimination") + 
+  ylab("Difficulty")
+
+b <- ggplot(coefs_2pl, 
+       aes(x = a1, fill = lexical_class_label)) + 
+  geom_histogram() + 
+  scale_fill_discrete(name = "Lexical class") + 
+  xlab("Discrimination") +
+  ylab("Number of words") +
+  xlim(0,4)
+
+gridExtra::grid.arrange(a, b)
+```
+
+
+```{r}
+coefs_2pl %>% 
+  select(definition, category) %>% 
+  write_csv("~/wordbank_words.csv")
+```
+
+
+Sort by category
+
+```{r}
+coefs_2pl %>% 
+  select(definition, category) %>% 
+  count(category, sort = T)
+```
+
+#locations
+
+```{r}
+coefs_2pl %>% 
+  select(definition, category) %>% 
+  filter(category == "locations")
+```
+#helping_verbs
+
+```{r}
+coefs_2pl %>% 
+  select(definition, category) %>% 
+  filter(category == "helping_verbs")
+```
+
+#quantifiers
+
+```{r}
+coefs_2pl %>% 
+  select(definition, category) %>% 
+  filter(category == "quantifiers")
+```
+#connecting_words
+
+```{r}
+coefs_2pl %>% 
+  select(definition, category) %>% 
+  filter(category == "connecting_words")
+```
+
+
+```{r}
+coefs_2pl %>% 
+  select(value = definition, category) %>% 
+  mutate(
+    value = if_else(value == "buttocks/bottom*", "buttocks", value),
+    value = if_else(value == "call (on phone)", "call", value),
+    value = if_else(value == "church*", "church", value),
+    value = if_else(value == "daddy*", "daddy", value),
+    value = if_else(value == "did/did ya", "did", value),
+    value = if_else(value == "dress (object)", "dress", value),
+    value = if_else(value == "gonna/going to", "going to", value),
+    value = if_else(value == "gotta/got to", "got to", value),
+    value = if_else(value == "grandma*", "grandma", value),
+    value = if_else(value == "grandpa*", "grandpa", value),
+    value = if_else(value == "hafta/have to", "have to", value),
+    value = if_else(value == "inside/in", "inside", value),
+    value = if_else(value == "lemme/let me", "let me", value),
+    value = if_else(value == "little (description)", "little", value),
+    value = if_else(value == "mommy*", "mommy", value),
+    value = if_else(value == "need/need to", "need to", value),
+    value = if_else(value == "owie/boo boo", "boo boo", value),
+    value = if_else(value == "penis*", "penis", value),
+    value = if_else(value == "shh/shush/hush", "shush", value),
+    value = if_else(value == "soda/pop", "soda", value),
+    value = if_else(value == "tissue/kleenex", "tissue", value),
+    value = if_else(value == "toy (object)", "toy", value),
+    value = if_else(value == "vagina*", "vagina", value),
+    value = if_else(value == "wanna/want to", "want to", value)
+  ) %>% 
+  #polysemy
+  filter(
+    !value %in% 
+      c(
+        "can (auxiliary)", "can (object)", 
+        "chicken (food)", "chicken (animal)", 
+        "clean (description)", "clean (action)",
+        "drink (beverage)", "drink (action)",
+        "dry (description)", "dry (action)",
+        "fish (food)", "fish (animal)",
+        "orange (food)", "orange (description)",
+        "slide (object)", "slide (action)",
+        "swing (object)", "swing (action)",
+        "watch (object)", "watch (action)",
+        "water (not beverage)", "water (beverage)",
+        "work (place)", "work (action)"
+        )
+  ) %>% 
+  #some quantifiers
+  filter(
+    !value %in% 
+      c("a", "am", "an", "the")
+  ) %>% 
+  #connecting words
+  filter(
+    !value %in%
+      c("and", "because", "but", "if", "so", "then")
+  ) %>% 
+  #helping verbs
+  filter(
+    !value %in% 
+      c("am", "are", "be", "can (auxiliary)", "could", "did/did ya", "do", "does", 
+        "don't", "gonna/going to", "gotta/got to", "hafta/have to", "is", "lemme/let me", 
+        "need/need to", "try/try to", "wanna/want to", "was", "were", "will", "would")
+  ) %>% 
+  write_tsv("~/worbank_with_category.tsv")
+```
+
+
+
+IRT comparison begins here
+
+Load in IRT parameters from all of the generative models
+
+```{r}
+irt_model_files <- 
+  c("RUN_29_GPU_14_models_Childes_all_words_item_parameters.txt",
+    "RUN_28_GPU_14_models_Childes_babi_all_words_item_parameters.txt",
+    "RUN_30_GPU_14_models_babi_all_words_item_parameters.txt"
+    )
+
+irt_read_fun <- function(model_path){
+  
+  full_path <- str_c("/Users/tymorcodes/GitHub_C/language-models-wordbank/output/", model_path)
+  
+  read_tsv(full_path, col_names = F, skip = 1) %>% 
+    select(definition = X2, discrim_ml = X3, diff_ml = X4) %>% 
+    mutate(path = model_path)
+  
+}
+
+all_irt_item_outputs_gen <- 
+  irt_model_files %>% 
+  map_df(irt_read_fun) %>% 
+  mutate(task = "generation")
+```
+
+
+Load in IRT parameters from the discriminative models
+
+```{r}
+irt_model_discrim <- 
+  c("both_datasets_40_20_irt_models_item_parameters.txt",
+    "childes_20_20_item_parameters.txt",
+    "babi_20_20_item_parameters.txt"
+    )
+
+irt_read_fun_discrim <- function(model_path){
+  
+  full_path <- str_c("/Users/tymorcodes/GitHub_C/language-models-wordbank/output/discriminative/", model_path)
+  
+  read_tsv(full_path, col_names = F, skip = 1) %>% 
+    select(definition = X2, discrim_ml = X3, diff_ml = X4) %>% 
+    mutate(path = model_path)
+  
+}
+
+all_irt_item_outputs_discrim <- 
+  irt_model_discrim %>% 
+  map_df(irt_read_fun_discrim) %>% 
+  mutate(task = "discrimination")
+```
+
+
+Combine the data
+
+```{r}
+all_irt_item_outputs <- 
+  all_irt_item_outputs_gen %>% 
+  rbind(all_irt_item_outputs_discrim)
+```
+
+
+Join irt parameters from models with wordbank
+
+```{r}
+irt_params_joined <- 
+  all_irt_item_outputs %>% 
+  filter(task == "generation") %>% 
+  left_join(
+    coefs_2pl_wg %>% 
+    select(definition, discrim_word = a1, diff_wrd = d, measure) %>% 
+    filter(measure == "Produces") %>% 
+    left_join(
+      coefs_2pl %>% 
+      select(definition, category, lexical_class),
+      by = "definition"
+    ),
+    by = "definition"
+  ) %>% 
+  rbind(
+    all_irt_item_outputs %>% 
+    filter(task == "discrimination") %>% 
+    left_join(
+      coefs_2pl_wg %>% 
+      select(definition, discrim_word = a1, diff_wrd = d, measure) %>% 
+      filter(measure == "Understands") %>% 
+      left_join(
+        coefs_2pl %>% 
+        select(definition, category, lexical_class),
+        by = "definition"
+      ),
+      by = "definition"
+    )
+  ) %>% 
+  drop_na(lexical_class) %>% 
+  mutate(
+    lexical_class_label = 
+      lexical_class %>% factor() %>% fct_relabel(~.x %>% as.character())
+  )
+```
+
+Correlations
+
+For each model
+```{r}
+irt_params_joined %>% 
+  group_by(path, task) %>% 
+  summarise(
+    cor_a = cor(discrim_ml, discrim_word, method = "spearman"),
+    cor_d = cor(diff_ml, diff_wrd, method = "spearman"),
+    count = n()
+  )
+```
+
+Correlations for each model and lexical class
+
+```{r}
+irt_params_joined %>% 
+  group_by(path, lexical_class, task) %>% 
+  summarise(
+    cor_a = cor(discrim_ml, discrim_word, method = "spearman"),
+    cor_d = cor(diff_ml, diff_wrd, method = "spearman"),
+    count = n()
+  )
+```
+
+Correlations for each model and category
+
+```{r}
+category_table <- 
+  irt_params_joined %>% 
+  group_by(path, category, task) %>% 
+  summarise(
+    cor_discrim = cor(discrim_ml, discrim_word, method = "spearman"),
+    cor_diff = cor(diff_ml, diff_wrd, method = "spearman")
+  ) %>% 
+  ungroup() %>% 
+  gather(-(path:task), key = "key", value = "value") %>% 
+  mutate(value = round(value, digits = 3)) %>% 
+  spread(category, value) %>% 
+  mutate(
+    data = if_else(path %in% c("babi_20_20_item_parameters.txt", "RUN_30_GPU_14_models_babi_all_words_item_parameters.txt"), "bAbI",
+                   if_else(path %in% c("childes_20_20_item_parameters.txt", "RUN_28_GPU_14_models_Childes_babi_all_words_item_parameters.txt"), "Childes",
+                           "Both")
+                   )
+  ) %>% 
+  select(-sounds)
+```
+
+
+```{r}
+clean_category_table <- 
+  category_table %>% 
+  mutate(
+    task = if_else(task == "discrimination", "Understands", "Produces"),
+    key = if_else(key == "cor_diff", "Difficulty", "Discrimination")
+  ) %>%
+  select(data, Task = task, Parameter = key, action_words:vehicles) %>% 
+  rename(Dataset = data) %>% 
+  arrange(Dataset, Task, Parameter)
+  
+
+cor_table <- 
+  irt_params_joined %>% 
+  group_by(path, task) %>% 
+  summarise(
+    cor_discrim = cor(discrim_ml, discrim_word, method = "spearman"),
+    cor_diff = cor(diff_ml, diff_wrd, method = "spearman")
+  ) %>% 
+  ungroup() %>% 
+  mutate(
+    cor_discrim = round(cor_discrim, digits = 3),
+    cor_diff = round(cor_diff, digits = 3)
+  ) %>% 
+  rename(Discrimination = cor_discrim, Difficulty = cor_diff, Task = task) %>% 
+  mutate(
+    data = if_else(path %in% c("babi_20_20_item_parameters.txt", "RUN_30_GPU_14_models_babi_all_words_item_parameters.txt"), "bAbI",
+                   if_else(path %in% c("childes_20_20_item_parameters.txt", "RUN_28_GPU_14_models_Childes_babi_all_words_item_parameters.txt"), "Childes",
+                           "Both")
+                   ),
+    Task = if_else(Task == "discrimination", "Understands", "Produces")
+  ) %>% 
+  rename(Dataset = data) %>% 
+  select(Dataset, Task, Discrimination, Difficulty)
+```
+
+Make latex tables
+
+```{r}
+library("xtable")
+xftbl <- xtable((as.data.frame(clean_category_table)))
+
+xftbl2 <- xtable((as.data.frame(cor_table)))
+```
+
+
+```{r}
+irt_params_joined %>% 
+  group_by(path, task) %>% 
+  summarise(
+    cor_discrim = cor(discrim_ml, discrim_word, method = "spearman"),
+    sig_discrim = cor.test(discrim_ml, discrim_word, method = "spearman")$p.value,
+    cor_diff = cor(diff_ml, diff_wrd, method = "spearman"),
+    sig_diff = cor.test(diff_ml, diff_wrd, method = "spearman")$p.value,
+  ) %>% 
+  ungroup() 
+```
+
+
+Summary stats 
+
+```{r}
+summary(irt_params_joined$discrim_ml)
+summary(irt_params_joined$diff_ml)
+
+summary(irt_params_joined$discrim_word)
+summary(irt_params_joined$diff_wrd)
+```
+
+
+Histogram plots 
+
+Babi
+(Filtered out the few words with a value > 20)
+
+```{r}
+all_irt_item_outputs_babi <- 
+  all_irt_item_outputs %>% 
+  filter(
+    path %in% c("both_datasets_40_20_irt_models_item_parameters.txt",
+             "RUN_28_GPU_14_models_Childes_babi_all_words_item_parameters.txt")
+  ) %>% 
+  gather(-definition, -path, -task, key = "key", value = "value") %>% 
+  filter(value < 20) %>% 
+  mutate(task = if_else(task == "generation", "Produces", "Understands")) %>% 
+  mutate(parameter = fct_recode(key, 
+                                Discrimination = "discrim_ml", 
+                                Difficulty = "diff_ml") %>%
+           relevel("Difficulty"),
+         measure = fct_relevel(task, "Understands"))
+
+ggplot(all_irt_item_outputs_babi, 
+       aes(x = value)) +
+  geom_histogram(binwidth = .5) + 
+  facet_grid(measure ~ parameter) + 
+  # xlim(-5,5) + 
+  xlab("Parameter value") + 
+  ylab("Number of words") 
+```
+
+Childes
+(Filtered out the few words with a value > 20)
+
+```{r}
+all_irt_item_outputs %>% count(path)
+
+all_irt_item_outputs_childes <- 
+  all_irt_item_outputs %>% 
+  filter(
+    path %in% c("childes_20_20_item_parameters.txt",
+             "RUN_29_GPU_14_models_Childes_all_words_item_parameters.txt")
+  ) %>% 
+  gather(-definition, -path, -task, key = "key", value = "value") %>% 
+  filter(value < 20) %>% 
+  mutate(task = if_else(task == "generation", "Produces", "Understands")) %>% 
+  mutate(parameter = fct_recode(key, 
+                                Discrimination = "discrim_ml", 
+                                Difficulty = "diff_ml") %>%
+           relevel("Difficulty"),
+         measure = fct_relevel(task, "Understands"))
+
+ggplot(all_irt_item_outputs_childes, 
+       aes(x = value)) +
+  geom_histogram(binwidth = .5) + 
+  facet_grid(measure ~ parameter) + 
+  # xlim(-5,5) + 
+  xlab("Parameter value") + 
+  ylab("Number of words")
+```
+
+All data histograms
+
+```{r}
+all_irt_item_outputs_both <- 
+  all_irt_item_outputs %>% 
+  filter(
+    path %in% c("RUN_28_GPU_14_models_Childes_babi_all_words_item_parameters.txt",
+             "both_datasets_40_20_irt_models_item_parameters.txt")
+  ) %>% 
+  gather(-definition, -path, -task, key = "key", value = "value") %>% 
+  filter(value < 20) %>% 
+  mutate(task = if_else(task == "generation", "Produces", "Understands")) %>% 
+  mutate(parameter = fct_recode(key, 
+                                Discrimination = "discrim_ml", 
+                                Difficulty = "diff_ml") %>%
+           relevel("Difficulty"),
+         measure = fct_relevel(task, "Understands"))
+
+ggplot(all_irt_item_outputs_both, 
+       aes(x = value)) +
+  geom_histogram(binwidth = .5) + 
+  facet_grid(measure ~ parameter) + 
+  # xlim(-5,5) + 
+  xlab("Parameter value") + 
+  ylab("Number of words")
+```
+
+
+
+Difficulty vs. Discrimination: Wordbank 
+
+```{r}
+a <- ggplot(coefs_2pl, 
+       aes(x = a1, y = -d, col = lexical_class_label)) + 
+  geom_point(alpha = .3) + 
+  ggrepel::geom_text_repel(data = filter(coefs_2pl, 
+                                a1 < 1 | a1 > 3.8 | -d > 5 | -d < -2.5), 
+                  aes(label = definition), size = 2,
+                  show.legend = FALSE) + 
+  scale_colour_discrete(name = "Lexical class") + 
+  xlab("Discrimination") + 
+  ylab("Difficulty") +
+  labs(title = "Worbank")
+
+a
+```
+
+Childes, Produces
+
+```{r}
+all_irt_item_outputs_childes_lex <- 
+  all_irt_item_outputs %>% 
+  filter(
+    path %in% c("childes_20_20_item_parameters.txt",
+             "RUN_29_GPU_14_models_Childes_all_words_item_parameters.txt")
+  ) %>% 
+  mutate(task = if_else(task == "generation", "Produces", "Understands")) %>% 
+  left_join(
+    coefs_2pl %>% 
+    select(definition, lexical_class),
+    by = "definition"
+  ) 
+  
+all_irt_item_outputs_childes_lex %>% 
+  drop_na(lexical_class) %>% 
+  filter(task == "Produces") %>% 
+  ggplot(aes(x = discrim_ml, y = -diff_ml, col = lexical_class)) +
+  geom_point(alpha = .3) + 
+  scale_colour_discrete(name = "Lexical class") + 
+  scale_x_log10() +
+  xlab("Discrimination") + 
+  ylab("Difficulty") 
+```
+
+Childes, Understands
+
+```{r}
+all_irt_item_outputs_childes_lex %>% 
+  drop_na(lexical_class) %>% 
+  #filter(discrim_ml < 20, task == "Understands") %>% 
+  filter(task == "Understands") %>% 
+  ggplot(aes(x = discrim_ml, y = -diff_ml, col = lexical_class)) +
+  geom_point(alpha = .3) + 
+  scale_colour_discrete(name = "Lexical class") + 
+  scale_x_log10() +
+  xlab("Discrimination") + 
+  ylab("Difficulty") 
+```
+
+
+```{r}
+all_irt_item_outputs_childes_lex %>% 
+  drop_na(lexical_class) %>% 
+  ggplot(aes(x = lexical_class, y = discrim_ml)) +
+  geom_boxplot() +
+  labs(x = "Lexical class", y = "Discrimination")
+
+all_irt_item_outputs_childes_lex %>% 
+  drop_na(lexical_class) %>% 
+  ggplot(aes(x = lexical_class, y = diff_ml)) +
+  geom_boxplot() +
+  labs(x = "Lexical class", y = "Difficulty")
+```
+
+
+```{r}
+all_irt_item_outputs_childes_lex %>% 
+  left_join(
+    coefs_2pl %>% 
+    select(definition, category, lexical_class),
+    by = "definition"
+  ) %>% 
+  ggplot(aes(x = category, y = discrim_ml)) +
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0, hjust=0))
+```
+
+
+Babi, Produces
+
+```{r}
+all_irt_item_outputs_babi_lex <- 
+  all_irt_item_outputs %>% 
+  filter(
+    path %in% c("babi_20_20_item_parameters.txt",
+             "RUN_30_GPU_14_models_babi_all_words_item_parameters.txt")
+  ) %>% 
+  mutate(task = if_else(task == "generation", "Produces", "Understands")) %>% 
+  left_join(
+    coefs_2pl %>% 
+    select(definition, lexical_class),
+    by = "definition"
+  ) 
+  
+all_irt_item_outputs_babi_lex %>% 
+  drop_na(lexical_class) %>% 
+  filter(task == "Produces") %>% 
+  ggplot(aes(x = discrim_ml, y = -diff_ml, col = lexical_class)) +
+  geom_point(alpha = .3) + 
+  scale_colour_discrete(name = "Lexical class") + 
+  scale_x_log10() +
+  xlab("Discrimination") + 
+  ylab("Difficulty") 
+```
+
+```{r}
+all_irt_item_outputs_babi_lex %>% 
+  drop_na(lexical_class) %>% 
+  filter(task == "Understands") %>% 
+  ggplot(aes(x = discrim_ml, y = -diff_ml, col = lexical_class)) +
+  geom_point(alpha = .3) + 
+  scale_colour_discrete(name = "Lexical class") + 
+  scale_x_log10() +
+  xlab("Discrimination") + 
+  ylab("Difficulty") 
+```
+
+
+```{r}
+all_irt_item_outputs_babi_lex %>% 
+  drop_na(lexical_class) %>% 
+  ggplot(aes(x = lexical_class, y = discrim_ml)) +
+  geom_boxplot() +
+  labs(x = "Lexical class", y = "Discrimination")
+
+all_irt_item_outputs_babi_lex %>% 
+  drop_na(lexical_class) %>% 
+  ggplot(aes(x = lexical_class, y = diff_ml)) +
+  geom_boxplot() +
+  labs(x = "Lexical class", y = "Difficulty")
+```
+
+
+All, Produces
+
+```{r}
+all_irt_item_outputs_all_lex <- 
+  all_irt_item_outputs %>% 
+  filter(
+    path %in% c("both_datasets_40_20_irt_models_item_parameters.txt",
+             "RUN_28_GPU_14_models_Childes_babi_all_words_item_parameters.txt")
+  ) %>% 
+  mutate(task = if_else(task == "generation", "Produces", "Understands")) %>% 
+  left_join(
+    coefs_2pl %>% 
+    select(definition, lexical_class),
+    by = "definition"
+  ) 
+  
+all_irt_item_outputs_all_lex %>% 
+  drop_na(lexical_class) %>% 
+  filter(task == "Produces") %>% 
+  ggplot(aes(x = discrim_ml, y = -diff_ml, col = lexical_class)) +
+  geom_point(alpha = .3) + 
+  scale_colour_discrete(name = "Lexical class") + 
+  scale_x_log10() +
+  xlab("Discrimination") + 
+  ylab("Difficulty") +
+  theme(legend.position = "bottom") 
+```
+All understands
+
+```{r}
+all_irt_item_outputs_all_lex %>% 
+  drop_na(lexical_class) %>% 
+  filter(task == "Understands") %>% 
+  ggplot(aes(x = discrim_ml, y = -diff_ml, col = lexical_class)) +
+  geom_point(alpha = .3) + 
+  scale_colour_discrete(name = "Lexical class") + 
+  scale_x_log10() +
+  xlab("Discrimination") + 
+  ylab("Difficulty") +
+  theme(legend.position = "bottom") 
+```
+
+
+
+Summary stats 
+
+```{r}
+summary(irt_params_joined$discrim_ml)
+summary(irt_params_joined$diff_ml)
+
+summary(irt_params_joined$discrim_word)
+summary(irt_params_joined$diff_wrd)
+```
+
+
+Barplots of the models
+
+```{r}
+mods_guy <- 
+  c("babi_20_20_ability_parameters.txt","childes_20_20_ability_parameters.txt")
+
+mods_ily <- c("RUN_30_GPU_14_models_babi_all_words_ability_parameters.txt","RUN_29_GPU_14_models_Childes_all_words_ability_parameters.txt")
+
+mods_guy_paths <- str_c("/Users/tymorcodes/GitHub_C/language-models-wordbank/output/", mods_ily)
+mods_ily_paths <- str_c("/Users/tymorcodes/GitHub_C/language-models-wordbank/output/discriminative/", mods_guy)
+```
+
+
+bAbI models
+
+```{r}
+babi_mods <- 
+  read_tsv("/Users/tymorcodes/GitHub_C/language-models-wordbank/output/discriminative/babi_20_20_ability_parameters.txt") %>% 
+  mutate(data = "bAbI", task = "Discrimination") %>% 
+  rbind(
+    read_tsv("/Users/tymorcodes/GitHub_C/language-models-wordbank/output/RUN_30_GPU_14_models_babi_all_words_ability_parameters.txt") %>% 
+    mutate(data = "bAbI", task = "Generation")
+  )
+
+babi_mods %>% 
+  filter(!name %in% c("all-1", "all-0")) %>% 
+  mutate(task = if_else(task == "Generation", "Producing", "Understanding")) %>% 
+  mutate(name = str_replace_all(name, "nyu-mll/", "")) %>% 
+  mutate(category = if_else(
+    str_detect(name, "roberta-base-1B"), "roberta-1B",
+    if_else(str_detect(name, "roberta-base-10M"), "roberta-10M",
+            if_else(str_detect(name, "roberta-base-100M"), "roberta-100M",
+                    if_else(str_detect(name, "roberta-med-small-1M"), "roberta-1M",
+                            name))))
+  ) %>% 
+  mutate(category = if_else(category == "bert-base-uncased", "bert",
+                            if_else(category == "distilbert-base-uncased", "distilbert", category))) %>% 
+  group_by(category, task) %>% 
+  summarise(theta = mean(theta)) %>% 
+  ungroup() %>% 
+  ggplot(aes(category, theta, fill = task)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(fill = "Task", y = "Estimated latent ability", x = "Model") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0, hjust=0), legend.position = "bottom") 
+```
+
+Childes models
+
+```{r}
+childes_mods <- 
+  read_tsv("/Users/tymorcodes/GitHub_C/language-models-wordbank/output/discriminative/childes_20_20_ability_parameters.txt") %>% 
+  mutate(data = "Childes", task = "Discrimination") %>% 
+  rbind(
+    read_tsv("/Users/tymorcodes/GitHub_C/language-models-wordbank/output/RUN_29_GPU_14_models_Childes_all_words_ability_parameters.txt") %>% 
+    mutate(data = "Childes", task = "Generation")
+  )
+
+
+childes_mods %>% 
+  filter(!name %in% c("all-1", "all-0")) %>% 
+  mutate(task = if_else(task == "Generation", "Producing", "Understanding")) %>% 
+  mutate(name = str_replace_all(name, "nyu-mll/", "")) %>% 
+  mutate(category = if_else(
+    str_detect(name, "roberta-base-1B"), "roberta-base-1B",
+    if_else(str_detect(name, "roberta-base-10M"), "roberta-base-10M",
+            if_else(str_detect(name, "roberta-base-100M"), "roberta-base-100M",
+                    if_else(str_detect(name, "roberta-med-small-1M"), "roberta-base-1M",
+                            name))))
+  ) %>% 
+  group_by(category, task) %>% 
+  summarise(theta = mean(theta)) %>% 
+  ungroup() %>% 
+  ggplot(aes(category, theta, fill = task)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(fill = "Task", y = "Estimated latent ability", x = "Model") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0, hjust=0)) 
+```
+
+```{r}
+all_mods <- 
+  read_tsv("/Users/tymorcodes/GitHub_C/language-models-wordbank/output/discriminative/both_datasets_40_20_irt_models_ability_parameters.txt") %>% 
+  mutate(data = "Childes", task = "Discrimination") %>% 
+  rbind(
+    read_tsv("/Users/tymorcodes/GitHub_C/language-models-wordbank/output/RUN_28_GPU_14_models_Childes_babi_all_words_ability_parameters.txt") %>% 
+    mutate(data = "Childes", task = "Generation")
+  )
+
+
+all_mods %>% 
+  filter(!name %in% c("all-1", "all-0")) %>% 
+  mutate(task = if_else(task == "Generation", "Producing", "Understanding")) %>% 
+  mutate(name = str_replace_all(name, "nyu-mll/", "")) %>% 
+  mutate(category = if_else(
+    str_detect(name, "roberta-base-1B"), "roberta-1B",
+    if_else(str_detect(name, "roberta-base-10M"), "roberta-10M",
+            if_else(str_detect(name, "roberta-base-100M"), "roberta-100M",
+                    if_else(str_detect(name, "roberta-med-small-1M"), "roberta-1M",
+                            name))))
+  ) %>% 
+  mutate(category = if_else(category == "bert-base-uncased", "bert",
+                            if_else(category == "distilbert-base-uncased", "distilbert", category))) %>% 
+  group_by(category, task) %>% 
+  summarise(theta = mean(theta)) %>% 
+  ungroup() %>% 
+  mutate(category = as.factor(category)) %>% 
+  mutate(category = fct_relevel(category, "bert", "distilbert", "roberta-1B", "roberta-100M", "roberta-10M", "roberta-1M")) %>% 
+  ggplot(aes(category, theta, fill = task)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(fill = "Task", y = "Estimated latent ability", x = "Model") +
+  theme(axis.text.x = element_text(size = 10, angle = 0), legend.position = "bottom") 
+```
+
+
+
